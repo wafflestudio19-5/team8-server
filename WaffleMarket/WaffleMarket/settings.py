@@ -28,6 +28,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['ec2-18-191-161-171.us-east-2.compute.amazonaws.com', '127.0.0.1']
 
+SITE_ID = 1
 
 # Application definition
 
