@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
+import datetime
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,7 +26,7 @@ SECRET_KEY = 'django-insecure-f%4!!wrq2a(&k7ucbuyga^)c+bkq7prcuxqy977r5qz#=%p4tz
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['ec2-18-191-161-171.us-east-2.compute.amazonaws.com', '127.0.0.1']
 
 
 # Application definition
@@ -37,6 +38,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'django_filters',
+    'drf_yasg',
+    'rest_framework',
+    'rest_framework_jwt',
+    'rest_framework.authtoken'
 ]
 
 MIDDLEWARE = [
@@ -75,8 +82,12 @@ WSGI_APPLICATION = 'WaffleMarket.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'HOST': 'wafflemarket-db.crdwokt4qf0t.ap-northeast-2.rds.amazonaws.com',
+        'PORT': 3306,
+        'NAME': 'wafflemarket_backend',
+        'USER': 'wafflemarket-backend',
+        'PASSWORD': 'password',
     }
 }
 
@@ -119,7 +130,31 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+REST_FRAMEWORK = {
+
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ),
+
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+    ),
+}
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+JWT_AUTH = {
+    'JWT_SECRET_KEY': SECRET_KEY,
+    'JWT_ALGORITHM': 'HS256',  # 암호화 알고리즘
+    'JWT_ALLOW_REFRESH': True,
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=1),
+    'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=3),
+}
