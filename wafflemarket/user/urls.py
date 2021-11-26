@@ -1,6 +1,6 @@
 from django.urls import path
-from wafflemarket.user.views import PingAPI
+from .views import PingAPI
 
 urlpatterns = [
-    path('', PingAPI.as_view()),
+    path('ping/', PingAPI.as_view()),
 ]
