@@ -43,7 +43,7 @@ def get_secret(setting, secrets=secrets):
 SECRET_KEY = get_secret("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['ec2-13-209-26-25.ap-northeast-2.compute.amazonaws.com', '13.209.26.25','127.0.0.1']
 
