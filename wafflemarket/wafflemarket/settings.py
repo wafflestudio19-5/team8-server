@@ -64,7 +64,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_jwt',
     'rest_framework.authtoken',
-    'user.apps.UserConfig'
+    'user.apps.UserConfig',
+    'six'
 ]
 
 MIDDLEWARE = [
@@ -111,7 +112,6 @@ DATABASES = {
         'PASSWORD': 'password',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -181,3 +181,9 @@ JWT_AUTH = {
     'JWT_EXPIRATION_DELTA': datetime.timedelta(days=1),
     'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=3),
 }
+
+# Custom User Model
+AUTH_USER_MODEL = 'user.User'
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
