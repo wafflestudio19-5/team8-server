@@ -7,6 +7,7 @@ import time
 import hashlib
 import hmac
 import base64
+import datetime 
 
 class CustomUserManager(BaseUserManager):
     use_in_migrations = True
@@ -34,6 +35,7 @@ class CustomUserManager(BaseUserManager):
 class Auth(models.Model):
     phone_number = models.CharField(max_length=255, unique=True)
     auth_number = models.CharField(max_length=255, null=True)
+    sended_at = models.DateTimeField(auto_now=True, null=True)
     
     def create_auth_number(self):
         self.auth_number = randint(1000, 10000)
@@ -74,11 +76,11 @@ class Auth(models.Model):
         requests.post(url, json=data, headers=headers)
         
     def authenticate(self, auth_number):
-        if auth_number==self.auth_number:
+        time_limit = timezone.now() - datetime.timedelta(minutes=5)
+        if auth_number==self.auth_number and self.sended_at>time_limit:
             return True
         else:
             return False
-
 
 class User(AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
