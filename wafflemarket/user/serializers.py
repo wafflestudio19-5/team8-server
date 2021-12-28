@@ -125,6 +125,59 @@ class UserLoginSerializer(serializers.Serializer):
             return False
         elif user.location is not None:
             return True
+        
+class UserSerializer(serializers.ModelSerializer):
+    location = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'phone_number',
+            'username',
+            'profile_image',
+            'email',
+            'created_at',
+            'last_login',
+            'leaved_at',
+            'username_changed_at',
+            'is_active',
+            'location'
+        )
+
+    def get_location(self, user):
+        return LocationSerializer(user.location, context=self.context).data
+
+
+class UserUpdateSerializer(serializers.Serializer):
+    username = serializers.CharField(required=False)
+    profile_image = serializers.ImageField(required=False)
+    
+    def validate(self, data):
+        u = re.compile((r'^[가-힣a-zA-Z0-9]+$'))
+        username = data.get('username')
+        if username is not None and u.match(username) is None:
+            raise serializers.ValidationError("닉네임은 띄어쓰기 없이 영문 한글 숫자만 가능해요.")
+        
+        return data
+    
+    def check_username(self, request_data):
+        data = request_data['data']
+        user = request_data['user']
+        time_limit = timezone.now() - datetime.timedelta(days=30)
+        username = data.get('username')
+        if username is not None and username!=user.username and user.username_changed_at is not None:
+            if user.username_changed_at > time_limit:
+                raise serializers.ValidationError("최근 30일 내 닉네임을 수정한 적이 있어요.")
+        return data
+    
+    def update(self, user, validated_data):
+        username = validated_data.get('username')
+        if username!=user.username:
+            user.username = username
+            user.username_changed_at = timezone.now()
+            user.save()
+        return user
     
         
 

@@ -69,3 +69,27 @@ class UserLeaveView(APIView):
         logout(request)'''
         request.user.delete()
         return Response(data={'leaved': True}, status=status.HTTP_200_OK)
+    
+class UserViewSet(viewsets.GenericViewSet): 
+    permission_classes = (permissions.IsAuthenticated, )
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
+    
+    def list(self, request):
+        user = request.user
+        return Response(self.get_serializer(user).data, status=status.HTTP_200_OK)
+    
+    def put(self, request):
+        user = request.user
+        serializer = UserUpdateSerializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.check_username({'data' : serializer.validated_data, 'user' : request.user})
+        user = serializer.update(user, serializer.validated_data)
+        
+        try:
+            profile_image = request.FILES['profile_image']
+            user.profile_image = profile_image
+            user.save()
+        except:
+            pass
+        return Response(self.get_serializer(user).data, status=status.HTTP_200_OK)
