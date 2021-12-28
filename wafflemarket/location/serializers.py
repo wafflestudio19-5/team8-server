@@ -5,7 +5,19 @@ from location.models import Location
 from user.models import User
 
 class LocationSerializer(serializers.ModelSerializer):
-    pass
+
+    neighborhoods = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Location
+        fields = (
+            'place_name',
+            'code',
+            'neighborhoods'
+        )
+
+    def get_neighborhoods(self, location):
+        return NeighborhoodSerializer(location.neighborhoods, many=True, context=self.context).data
 
 class NeighborhoodSerializer(serializers.ModelSerializer):
     

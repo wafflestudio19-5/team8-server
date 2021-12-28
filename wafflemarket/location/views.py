@@ -8,7 +8,8 @@ class LocationView(APIView):
     permission_classes = (permissions.IsAuthenticated, )
 
     def get(self, request):
-        pass
+        user = request.user
+        return Response(LocationSerializer(user.location).data, status=status.HTTP_200_OK)
 
     def post(self, request):
         user = request.user
