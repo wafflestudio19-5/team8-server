@@ -36,7 +36,8 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/v1/', include('user.urls'))
+    path('api/v1/', include('user.urls')),
+    path('api/v1/', include('location.urls'))
 ]
 
 # DEBUG = True 일때만 Swagger 사용
