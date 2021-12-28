@@ -11,7 +11,11 @@ class LocationView(APIView):
         pass
 
     def post(self, request):
-        pass
+        user = request.user
+        serializer = UserLocationValidator(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.update(user, serializer.validated_data)
+        return Response(UserLocationSerializer(user).data, status=status.HTTP_200_OK)
 
 class NeighborhoodView(APIView):
     permission_classes = (permissions.IsAuthenticated, )
