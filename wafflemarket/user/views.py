@@ -4,9 +4,21 @@ from rest_framework import status, viewsets, permissions
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .serializers import UserLoginSerializer, UserCreateSerializer,  UserAuthSerializer, UserSerializer
+from .serializers import UserLoginSerializer, UserCreateSerializer,  UserAuthSerializer, UserSerializer, UserUpdateSerializer
 
 User = get_user_model()
+
+def login(data):
+    serializer = UserLoginSerializer(data=data)
+    first_login = serializer.check_first_login(data=data)
+    location_exists = serializer.location_exists(data=data)
+    serializer.is_valid(raise_exception=True)
+                
+    phone_number = serializer.validated_data['phone_number']
+    username = serializer.validated_data['username']
+    token = serializer.validated_data['token']
+    return {'phone_number': phone_number, 'username' : username, 'logined': True, 'first_login' : first_login, 'location_exists' : location_exists, 'token' : token}
+
 
 class UserAuthView(APIView):
     permission_classes = (permissions.AllowAny, )
@@ -15,21 +27,18 @@ class UserAuthView(APIView):
         serializer = UserAuthSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         auth = serializer.save()
-        return Response(data={'phone_number' : auth.phone_number, 'auth_number' : auth.auth_number}, status=status.HTTP_200_OK)
-    
+        return Response(data={'phone_number': auth.phone_number, 'auth_number': auth.auth_number},
+                        status=status.HTTP_200_OK)
+        
     def put(self, request):
         serializer = UserAuthSerializer(data=request.data)
         if serializer.authenticate(data=request.data):
             if User.objects.filter(phone_number=request.data['phone_number']).exists():
-                serializer = UserLoginSerializer(data=request.data)
-                serializer.is_valid(raise_exception=True)
-                token = serializer.validated_data['token']
-                return Response({'logined': True, 'token': token}, status=status.HTTP_200_OK)
+                return Response(login(request.data), status=status.HTTP_200_OK)
             else:
-                return Response(data={'authenticated' : True, 'phone_number' : request.data['phone_number']}, status=status.HTTP_200_OK)
+                return Response(data={'authenticated': True, 'phone_number': request.data['phone_number']},status=status.HTTP_200_OK)
         else:
             return Response(data='인증번호가 일치하지 않습니다.', status=status.HTTP_400_BAD_REQUEST)
-        
     
 class UserSignUpView(APIView):
     permission_classes = (permissions.AllowAny, )
@@ -39,21 +48,9 @@ class UserSignUpView(APIView):
         try:
             user, jwt_token = serializer.save()
         except IntegrityError:
-            serializer = UserLoginSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            token = serializer.validated_data['token']
-            return Response({'logined': True, 'token': token}, status=status.HTTP_200_OK)
-        return Response(data={'user': user.phone_number, 'token': jwt_token}, status=status.HTTP_201_CREATED)
-
-
-class UserLoginView(APIView):
-    permission_classes = (permissions.AllowAny, )
-
-    def post(self, request):
-        serializer = UserLoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        token = serializer.validated_data['token']
-        return Response({'logined': True, 'token': token}, status=status.HTTP_200_OK)
+            return Response(login(request.data), status=status.HTTP_200_OK)
+        return Response(login(request.data), status=status.HTTP_201_CREATED)
+    
     
 class UserLogoutView(APIView):
     permission_classes = (permissions.IsAuthenticated, )
@@ -66,29 +63,9 @@ class UserLeaveView(APIView):
     permission_classes = (permissions.IsAuthenticated, )
 
     def delete(self, request):
-        request.user.is_active = False
+        #우선 임시탈퇴를 영구탈퇴로 변경하여 구현함
+        '''request.user.is_active = False
         request.user.save()
-        logout(request)
+        logout(request)'''
+        request.user.delete()
         return Response(data={'leaved': True}, status=status.HTTP_200_OK)
-    
-    
-##미완
-'''class UserViewSet(viewsets.GenericViewSet): 
-    permission_classes = (permissions.IsAuthenticated, )
-    serializer_class = UserSerializer
-    queryset = User.objects.all()
-    
-    def get(self, request):
-        if request.user.is_anonymous:
-            return Response(status=status.HTTP_403_FORBIDDEN, data='먼저 로그인 하세요.')
-        user = request.user
-        return Response(self.get_serializer(user).data, status=status.HTTP_200_OK)
-
-    def put(self, request):
-        if request.user.is_anonymous:
-            return Response(status=status.HTTP_403_FORBIDDEN, data='먼저 로그인 하세요.')
-        user = request.user
-        serializer = UserCreateSerializer(user, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.update(user, serializer.validated_data)
-        return Response(self.get_serializer(user).data, status=status.HTTP_200_OK)'''

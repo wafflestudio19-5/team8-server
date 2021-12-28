@@ -8,6 +8,10 @@ from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework_jwt.settings import api_settings
 from django.http import HttpResponseBadRequest
 from .models import User, Auth
+import re
+from django.utils import timezone
+import datetime
+from location.serializers import LocationSerializer
 
 User = get_user_model()
 JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
@@ -21,11 +25,15 @@ def jwt_token_of(user):
 class UserAuthSerializer(serializers.Serializer):
     phone_number = serializers.CharField(required=True)
 
-    def validate(self, data):  ##미완
+    def validate(self, data):
+        p = re.compile((r'^\d{2,3}\d{3,4}\d{4}$'))
         phone_number = data.get('phone_number')
         if phone_number is None:
-            raise serializers.ValidationError("전화번호가 올바르지 않습니다.")
-        return data
+            raise serializers.ValidationError("전화번호가 입력되지 않았어요.")
+        elif p.match(phone_number) is None:
+            raise serializers.ValidationError("전화번호가 올바르지 않아요.")
+        else:
+            return data
     
     def create(self, validated_data):
         phone_number = validated_data.get('phone_number')
@@ -39,8 +47,10 @@ class UserAuthSerializer(serializers.Serializer):
     def authenticate(self, data):
         phone_number = data.get("phone_number")
         auth_number = data.get("auth_number")
-        if Auth.objects.filter(phone_number=phone_number, auth_number=auth_number).exists(): return True
-        else: return False
+        if Auth.objects.filter(phone_number=phone_number, auth_number=auth_number).exists():
+            return True
+        else:
+            return False
 
 class UserCreateSerializer(serializers.Serializer):
     phone_number = serializers.CharField(required=True)
@@ -48,10 +58,19 @@ class UserCreateSerializer(serializers.Serializer):
     profile_image = serializers.ImageField(required=False)
     is_staff = serializers.BooleanField(required=False)
 
-    def validate(self, data): ##미완
+    def validate(self, data):
+        p = re.compile(r'^\d{2,3}\d{3,4}\d{4}$')
         phone_number = data.get('phone_number')
         if phone_number is None:
-            raise serializers.ValidationError("인증 실패")
+            raise serializers.ValidationError("전화번호가 입력되지 않았어요.")
+        elif p.search(phone_number) is None:
+            raise serializers.ValidationError("전화번호가 올바르지 않아요.")      
+        
+        u = re.compile((r'^[가-힣a-zA-Z0-9]+$'))
+        username = data.get('username')
+        if username is not None and u.match(username) is None:
+            raise serializers.ValidationError("닉네임은 띄어쓰기 없이 영문 한글 숫자만 가능해요.")
+        
         return data
 
     def create(self, validated_data):
@@ -61,12 +80,6 @@ class UserCreateSerializer(serializers.Serializer):
         user = User.objects.create_user(**validated_data)
         user.save()
         return user, jwt_token_of(user)
-    
-    def update(self, user, username=None, profile_image=None, **kwargs):
-        user.username = username
-        user.profile_image = profile_image
-        user.save()
-        return user
     
 
 class UserLoginSerializer(serializers.Serializer):
@@ -88,30 +101,30 @@ class UserLoginSerializer(serializers.Serializer):
             'username' : user.username,
             'token': jwt_token_of(user)
         }
-        
-
-class UserSerializer(serializers.ModelSerializer):
-    location = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = User
-        fields = (
-            'id',
-            'phone_number',
-            'username',
-            'email',
-            'created_at',
-            'logined_at',  
-            'leaved_at',  
-            'is_active',
-            'location'
-        )
-
-    def get_location(self, user): ##미완
-        return "location"
     
-    def validate(self, data): ##미완
-        return data
+    def check_first_login(self, data):
+        phone_number = data.get('phone_number')
+        if User.objects.filter(phone_number=phone_number, is_active=True):
+            user = User.objects.get(phone_number=phone_number, is_active=True)
+        else:
+            raise serializers.ValidationError("존재하지 않는 사용자입니다.")
         
-
+        if user.last_login is None:
+            return True
+        elif user.last_login is not None:
+            return False
+    
+    def location_exists(self, data):
+        phone_number = data.get('phone_number')
+        if User.objects.filter(phone_number=phone_number, is_active=True):
+            user = User.objects.get(phone_number=phone_number, is_active=True)
+        else:
+            raise serializers.ValidationError("존재하지 않는 사용자입니다.")
+        
+        if user.location is None:
+            return False
+        elif user.location is not None:
+            return True
+    
+        
 

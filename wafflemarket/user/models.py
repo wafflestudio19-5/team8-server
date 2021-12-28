@@ -8,6 +8,7 @@ import hashlib
 import hmac
 import base64
 import datetime 
+from location.models import Location
 
 class CustomUserManager(BaseUserManager):
     use_in_migrations = True
@@ -40,7 +41,7 @@ class Auth(models.Model):
     def create_auth_number(self):
         self.auth_number = randint(1000, 10000)
         self.save()
-        self.send_sms() # 인증번호가 담긴 SMS를 전송
+        #self.send_sms() # 인증번호가 담긴 SMS를 전송
         
     def send_sms(self):
         
@@ -91,9 +92,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=255, null=True)
     email = models.EmailField(max_length=255, null=True)
     profile_image = models.ImageField(blank=True, upload_to="photo/%Y/%m/%d")
+    location = models.ForeignKey(Location, related_name='users', null=True, on_delete=models.SET_NULL)
+    
     created_at = models.DateTimeField(auto_now_add=True, editable=False, null=True)
     leaved_at = models.DateTimeField(null=True)
-    logined_at = models.DateTimeField(null=True)
+    last_login = models.DateTimeField(null=True)
+    username_changed_at = models.DateTimeField(null=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     
