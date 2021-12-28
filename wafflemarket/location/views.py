@@ -21,4 +21,5 @@ class NeighborhoodView(APIView):
     permission_classes = (permissions.IsAuthenticated, )
 
     def get(self, request):
-        pass
+        user = request.user
+        return Response(NeighborhoodSerializer(user.location.neighborhoods, many=True).data, status=status.HTTP_200_OK)

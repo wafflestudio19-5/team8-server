@@ -8,7 +8,16 @@ class LocationSerializer(serializers.ModelSerializer):
     pass
 
 class NeighborhoodSerializer(serializers.ModelSerializer):
-    pass
+    
+    place_name = serializers.ReadOnlyField(source='neighborhood.place_name')
+    code = serializers.ReadOnlyField(source='neighborhood.code')
+
+    class Meta:
+        model = Location
+        fields = (
+            'place_name',
+            'code',
+        )
 
 class UserLocationSerializer(serializers.ModelSerializer):
 
