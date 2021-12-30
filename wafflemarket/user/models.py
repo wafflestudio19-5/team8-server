@@ -12,26 +12,12 @@ from location.models import Location
 
 class CustomUserManager(BaseUserManager):
     use_in_migrations = True
-
-    def _create_user(self, phone_number, **extra_fields):
-        if phone_number is None:
-            raise ValueError('휴대폰번호를 입력해주세요.')
-        
+    
+    def create_user(self, phone_number, **extra_fields):
+        extra_fields.setdefault('is_superuser', False)
         user = self.model(phone_number=phone_number, **extra_fields)
         user.save(using=self._db)
         return user
-
-    def create_user(self, phone_number, **extra_fields):
-        extra_fields.setdefault('is_staff', False)
-        extra_fields.setdefault('is_superuser', False)
-        return self._create_user(phone_number, **extra_fields)
-
-    def create_superuser(self, email, password, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-        if extra_fields.get('is_staff') is not True or extra_fields.get('is_superuser') is not True:
-            raise ValueError('권한 설정이 잘못되었습니다.')
-        return self._create_user(email, password, **extra_fields)
     
 class Auth(models.Model):
     phone_number = models.CharField(max_length=255, unique=True)
@@ -90,7 +76,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     phone_number = models.CharField(max_length=255, null=True, unique=True)
     username = models.CharField(max_length=255, null=True)
-    email = models.EmailField(max_length=255, null=True)
+    email = models.EmailField(max_length=255, null=True, unique=True)
     profile_image = models.ImageField(blank=True, upload_to="photo/%Y/%m/%d")
     location = models.ForeignKey(Location, related_name='users', null=True, on_delete=models.SET_NULL)
     
@@ -98,17 +84,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     leaved_at = models.DateTimeField(null=True)
     last_login = models.DateTimeField(null=True)
     username_changed_at = models.DateTimeField(null=True)
-    is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     
     def __str__(self):
         return self.username
-    
-    def update(self, username=None, email=None):
-        if username is not None: self.username = username
-        if email is not None: self.email = email
-        self.save()
-        return self
-
-
 

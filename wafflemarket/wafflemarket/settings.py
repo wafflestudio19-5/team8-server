@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'user.apps.UserConfig',
     'six'
     'location.apps.LocationConfig',
+    'storages'
 ]
 
 MIDDLEWARE = [
@@ -186,6 +187,3 @@ JWT_AUTH = {
 
 # Custom User Model
 AUTH_USER_MODEL = 'user.User'
-
-MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
