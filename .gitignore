@@ -133,7 +133,7 @@ dmypy.json
 .idea/
 
 # Hide secret information
-secrets.json
+secrets.py
 
 # Web static file
 static/

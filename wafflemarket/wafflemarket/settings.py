@@ -15,6 +15,7 @@ from pathlib import Path
 
 import os, json
 from django.core.exceptions import ImproperlyConfigured
+from .secrets import MY_SECRET, MY_DATABASES, MY_DEBUG
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,25 +26,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 # Actual secret key is in secrets.json
 
-secret_file = os.path.join(BASE_DIR, 'wafflemarket/secrets.json') # secrets.json 파일 위치를 명시
-
-with open(secret_file) as f:
-    secrets = json.loads(f.read())
-
-
-def get_secret(setting, secrets=secrets):
-    """비밀 변수를 가져오거나 명시적 예외를 반환한다."""
-    try:
-        return secrets[setting]
-    except KeyError:
-        error_msg = "Set the {} environment variable".format(setting)
-        raise ImproperlyConfigured(error_msg)
-
-
-SECRET_KEY = get_secret("SECRET_KEY")
+SECRET_KEY = MY_SECRET['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = MY_DEBUG
 
 ALLOWED_HOSTS = ['ec2-54-180-144-124.ap-northeast-2.compute.amazonaws.com', '54.180.144.124', '127.0.0.1']
 
@@ -51,7 +37,7 @@ SITE_ID = 1
 
 # Application definition
 
-INSTALLED_APPS = [
+DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -60,13 +46,21 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'django_filters',
+]
+
+PROJECT_APPS = [
+    'user.apps.UserConfig',
+    'location.apps.LocationConfig',
+]
+
+THIRD_PARTY_APPS = [
     'drf_yasg',
     'rest_framework',
     'rest_framework_jwt',
     'rest_framework.authtoken',
-    'user.apps.UserConfig',
-    'location.apps.LocationConfig',
 ]
+
+INSTALLED_APPS = DJANGO_APPS + PROJECT_APPS + THIRD_PARTY_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -102,16 +96,7 @@ WSGI_APPLICATION = 'wafflemarket.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'HOST': 'wafflemarket-db.crdwokt4qf0t.ap-northeast-2.rds.amazonaws.com',
-        'PORT': 3306,
-        'NAME': 'wafflemarket_backend',
-        'USER': 'wafflemarket-backend',
-        'PASSWORD': 'password',
-    }
-}
+DATABASES = MY_DATABASES
 
 
 # Password validation
