@@ -37,8 +37,6 @@ jobs:
     - name: Creating Mysql User
       run: |
         sudo /etc/init.d/mysql start
-        cd /usr/bin/
-        ./mysql -uroot -p${{ secrets.ROOT_PSWORD }} -e "create user 'wafflemarket-backend'@'localhost' identified by 'password';grant all privileges on wafflemarket_backend.* to 'wafflemarket-backend'@'localhost';"
     - name: Run Migrations
       run: |
         python manage.py migrate
