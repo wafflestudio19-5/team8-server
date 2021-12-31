@@ -37,6 +37,15 @@ jobs:
     - name: Creating Mysql User
       run: |
         sudo /etc/init.d/mysql start
+        cd /usr/bin/
+        ./mysql -uroot -p${{ secrets.ROOT_PSWORD }} -e "create user 'wafflemarket-backend'@'localhost' identified by 'password';grant all privileges on wafflemarket_backend.* to 'wafflemarket-backend'@'localhost';"
+      env:
+        DBENGINE: django.db.backends.mysql
+        DBNAME: wafflemarket_backend
+        DBUSER: wafflemarket-backend
+        DBPASSWORD: password
+        DBHOST: 127.0.0.1
+        DBPORT: 3306
     - name: Run Migrations
       run: |
         python manage.py migrate
