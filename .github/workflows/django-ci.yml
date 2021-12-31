@@ -39,6 +39,7 @@ jobs:
         sudo /etc/init.d/mysql start
         cd /usr/bin/
         ./mysql -uroot -p${{ secrets.ROOT_PSWORD }} -e "create user 'wafflemarket-backend'@'localhost' identified by 'password';grant all privileges on wafflemarket_backend.* to 'wafflemarket-backend'@'localhost';"
+        systemctl status mysql.service
       env:
         DBENGINE: django.db.backends.mysql
         DBNAME: wafflemarket_backend
