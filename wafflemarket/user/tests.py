@@ -2,7 +2,6 @@ from factory.django import DjangoModelFactory
 
 from user.models import User
 from django.test import TestCase, TransactionTestCase
-from django.db import transaction
 from rest_framework import status
 import json
 
@@ -69,7 +68,6 @@ class PostUserTestCase(TransactionTestCase):
 
         res_data = response.json()
         self.assertEqual(res_data['username'], ['This field is required.'])
-        print(data)
 
         user_count = User.objects.count()
         self.assertEqual(user_count, 1)
@@ -104,7 +102,7 @@ class PostUserTestCase(TransactionTestCase):
         user_count = User.objects.count()
         self.assertEqual(user_count, 1)
 
-    def test_post_user_register(self):
+    def test_post_user_sucess(self):
         # successively register user
         data = self.post_data.copy()
         response = self.client.post('/api/v1/signup/', data=data)

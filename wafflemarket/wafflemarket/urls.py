@@ -44,9 +44,6 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
 # DEBUG = True 일때만 Swagger 사용
 if settings.DEBUG:
     urlpatterns += [

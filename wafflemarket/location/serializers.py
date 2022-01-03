@@ -47,7 +47,7 @@ class UserLocationSerializer(serializers.ModelSerializer):
 
 class UserLocationValidator(serializers.Serializer):
     
-    location_code = serializers.CharField(required=True, error_messages={'invalid': '지역코드를 입력해주세요.'})
+    location_code = serializers.CharField(required=True)
     
     def validate(self, data):
         location_code = data.get('location_code')
