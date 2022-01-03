@@ -67,6 +67,7 @@ DJANGO_APPS = [
 PROJECT_APPS = [
     'user.apps.UserConfig',
     'location.apps.LocationConfig',
+    'article.apps.ArticleConfig',
 ]
 
 THIRD_PARTY_APPS = [
@@ -117,6 +118,11 @@ WSGI_APPLICATION = 'wafflemarket.wsgi.application'
 
 DATABASES = {
     'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME'  : os.path.join(BASE_DIR, 'db.sqlite3'),}}
+
+'''DATABASES = {
+    'default': {
         'ENGINE': 'django.db.backends.mysql',
         'HOST': 'localhost' if get_secret("DB_HOST") == "" else get_secret("DB_HOST"),
         'PORT': 3306,
@@ -124,7 +130,7 @@ DATABASES = {
         'USER': 'wafflemarket-backend',
         'PASSWORD': 'team8_wafflemarket_backend',
     }
-}
+}'''
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
