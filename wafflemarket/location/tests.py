@@ -76,5 +76,88 @@ class PostLocationTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         res_data = response.json()
-        self.assertEqual(res_data["username"], "steve")
+        self.assertEqual(res_data['username'], 'steve')
+        self.assertEqual(res_data['location'], '서울특별시 종로구 당주동')
         self.assertEqual(User.objects.get(location=self.location1).phone_number, '01011112222')
+
+class GetLocationTestCase(TestCase):
+    
+    @classmethod
+    def setUp(cls):
+
+        cls.user = UserFactory(
+            phone_number='01011112222',
+            email='wafflemarket@test.com',
+            username='steve'
+        )
+        cls.user_token = 'JWT ' + jwt_token_of(User.objects.get(phone_number='01011112222'))
+
+        cls.location1 = LocationFactory(
+            code='1111011700',
+            place_name='서울특별시 종로구 당주동'
+        )
+        cls.user.location = cls.location1
+        cls.user.save()
+        cls.location2 = LocationFactory(
+            code='1111011100',
+            place_name='서울특별시 종로구 옥인동'
+        )
+        LocationNeighborhood.objects.create(location=cls.location1,neighborhood=cls.location2)
+    
+    def test_get_location_wrong_information(self):
+        # no token
+        response = self.client.get('/api/v1/location/')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_location_sucess(self):
+        # successively get user's location info
+        response = self.client.get('/api/v1/location/', HTTP_AUTHORIZATION=self.user_token)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        res_data = response.json()
+        self.assertEqual(res_data['place_name'], '서울특별시 종로구 당주동')
+        self.assertEqual(res_data['code'], '1111011700')
+        self.assertEqual(len(res_data['neighborhoods']), 1)
+
+class GetNeighborhoodTestCase(TestCase):
+    
+    @classmethod
+    def setUp(cls):
+
+        cls.user = UserFactory(
+            phone_number='01011112222',
+            email='wafflemarket@test.com',
+            username='steve'
+        )
+        cls.user_token = 'JWT ' + jwt_token_of(User.objects.get(phone_number='01011112222'))
+
+        cls.location1 = LocationFactory(
+            code='1111011700',
+            place_name='서울특별시 종로구 당주동'
+        )
+        cls.user.location = cls.location1
+        cls.user.save()
+        cls.location2 = LocationFactory(
+            code='1111011100',
+            place_name='서울특별시 종로구 옥인동'
+        )
+        LocationNeighborhood.objects.create(location=cls.location1,neighborhood=cls.location2)
+        cls.location3 = LocationFactory(
+            code='1111010100',
+            place_name='서울특별시 종로구 청운동'
+        )
+        LocationNeighborhood.objects.create(location=cls.location1,neighborhood=cls.location3)
+    
+    def test_get_neighborhood_wrong_information(self):
+        # no token
+        response = self.client.get('/api/v1/location/neighborhood/')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_neighborhood_sucess(self):
+        # successively get neighborhood info of user's location
+        response = self.client.get('/api/v1/location/neighborhood/', HTTP_AUTHORIZATION=self.user_token)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        res_data = response.json()
+        self.assertEqual(len(res_data), 2)
+        self.assertEqual({res_data[0]['code'], res_data[1]['code']}, {'1111011100', '1111010100'})
