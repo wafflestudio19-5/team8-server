@@ -77,7 +77,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone_number = models.CharField(max_length=255, null=True, unique=True)
     username = models.CharField(max_length=255, null=True)
     email = models.EmailField(max_length=255, null=True, unique=True)
-    profile_image = models.ImageField(blank=True, upload_to="photo/%Y/%m/%d")
+    # profile_image = models.ImageField(blank=True, upload_to="photo/%Y/%m/%d")
     location = models.ForeignKey(Location, related_name='users', null=True, on_delete=models.SET_NULL)
     
     created_at = models.DateTimeField(auto_now_add=True, editable=False, null=True)

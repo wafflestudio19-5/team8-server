@@ -11,7 +11,7 @@ from .models import User, Auth
 import re
 from django.utils import timezone
 import datetime
-from location.serializers import LocationSerializer
+# from location.serializers import LocationSerializer
 
 User = get_user_model()
 JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
@@ -56,7 +56,6 @@ class UserCreateSerializer(serializers.Serializer):
     phone_number = serializers.CharField(required=True)
     username = serializers.CharField(required=True)
     profile_image = serializers.ImageField(required=False)
-    is_staff = serializers.BooleanField(required=False)
 
     def validate(self, data):
         p = re.compile(r'^\d{2,3}\d{3,4}\d{4}$')
@@ -74,9 +73,6 @@ class UserCreateSerializer(serializers.Serializer):
         return data
 
     def create(self, validated_data):
-        is_staff = validated_data.get('is_staff')
-        if is_staff==False:
-            user = User.objects.create_superuser(**validated_data)
         user = User.objects.create_user(**validated_data)
         user.save()
         return user, jwt_token_of(user)
