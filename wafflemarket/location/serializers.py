@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from location.models import Location
 from user.models import User
 
+# response serializer for [GET]location
 class LocationSerializer(serializers.ModelSerializer):
 
     neighborhoods = serializers.SerializerMethodField()
@@ -19,6 +20,7 @@ class LocationSerializer(serializers.ModelSerializer):
     def get_neighborhoods(self, location):
         return NeighborhoodSerializer(location.neighborhoods, many=True, context=self.context).data
 
+# response serializer for [GET]location/neighborhood
 class NeighborhoodSerializer(serializers.ModelSerializer):
     
     place_name = serializers.ReadOnlyField(source='neighborhood.place_name')
@@ -31,6 +33,7 @@ class NeighborhoodSerializer(serializers.ModelSerializer):
             'code',
         )
 
+# response serializer for [POST]location
 class UserLocationSerializer(serializers.ModelSerializer):
 
     location = serializers.SerializerMethodField()
@@ -45,6 +48,7 @@ class UserLocationSerializer(serializers.ModelSerializer):
     def get_location(self, user):
         return user.location.place_name
 
+# request validator for [POST]location
 class UserLocationValidator(serializers.Serializer):
     
     location_code = serializers.CharField(required=True)

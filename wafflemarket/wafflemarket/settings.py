@@ -45,7 +45,7 @@ else:
     SECRET_KEY = get_secret("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['ec2-54-180-144-124.ap-northeast-2.compute.amazonaws.com', '54.180.144.124', '127.0.0.1']
 
@@ -197,3 +197,16 @@ JWT_AUTH = {
 
 # Custom User Model
 AUTH_USER_MODEL = 'user.User'
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'api_key': {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'Authorization'
+        }
+    },
+}
