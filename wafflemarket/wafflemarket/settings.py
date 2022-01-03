@@ -39,11 +39,13 @@ def get_secret(setting, secrets=secrets):
         error_msg = "Set the {} environment variable".format(setting)
         raise ImproperlyConfigured(error_msg)
 
-
-SECRET_KEY = get_secret("SECRET_KEY")
+if get_secret("SECRET_KEY") == "":
+    SECRET_KEY = "f4>hy$pX[~4Y&1)>|>XC.z5#.:U2v&?&(44z^FC}d,B8{|hnXr"
+else:
+    SECRET_KEY = get_secret("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['ec2-54-180-144-124.ap-northeast-2.compute.amazonaws.com', '54.180.144.124', '127.0.0.1']
 
@@ -51,7 +53,7 @@ SITE_ID = 1
 
 # Application definition
 
-INSTALLED_APPS = [
+DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -60,13 +62,21 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'django_filters',
+]
+
+PROJECT_APPS = [
+    'user.apps.UserConfig',
+    'location.apps.LocationConfig',
+]
+
+THIRD_PARTY_APPS = [
     'drf_yasg',
     'rest_framework',
     'rest_framework_jwt',
     'rest_framework.authtoken',
-    'user.apps.UserConfig',
-    'location.apps.LocationConfig',
 ]
+
+INSTALLED_APPS = DJANGO_APPS + PROJECT_APPS + THIRD_PARTY_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -105,11 +115,11 @@ WSGI_APPLICATION = 'wafflemarket.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'HOST': 'wafflemarket-db.crdwokt4qf0t.ap-northeast-2.rds.amazonaws.com',
+        'HOST': 'localhost' if get_secret("DB_HOST") == "" else get_secret("DB_HOST"),
         'PORT': 3306,
         'NAME': 'wafflemarket_backend',
         'USER': 'wafflemarket-backend',
-        'PASSWORD': 'password',
+        'PASSWORD': 'team8_wafflemarket_backend',
     }
 }
 

@@ -132,8 +132,5 @@ dmypy.json
 .DS_Store
 .idea/
 
-# Hide secret information
-secrets.json
-
 # Web static file
 static/
