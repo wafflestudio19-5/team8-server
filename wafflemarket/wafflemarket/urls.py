@@ -16,6 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path, re_path
 from django.conf import settings
+from django.conf.urls.static import static
 
 from rest_framework.permissions import AllowAny
 
@@ -39,6 +40,12 @@ urlpatterns = [
     path('api/v1/', include('user.urls')),
     path('api/v1/', include('location.urls'))
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # DEBUG = True 일때만 Swagger 사용
 if settings.DEBUG:
