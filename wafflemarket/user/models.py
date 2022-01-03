@@ -21,8 +21,8 @@ class CustomUserManager(BaseUserManager):
     
 class Auth(models.Model):
     phone_number = models.CharField(max_length=255, unique=True)
-    auth_number = models.CharField(max_length=255, null=True)
-    sended_at = models.DateTimeField(auto_now=True, null=True)
+    auth_number = models.CharField(max_length=255)
+    sended_at = models.DateTimeField(auto_now=True)
     
     def create_auth_number(self):
         self.auth_number = randint(1000, 10000)
@@ -75,12 +75,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = []
     
     phone_number = models.CharField(max_length=255, null=True, unique=True)
-    username = models.CharField(max_length=255, null=True)
+    username = models.CharField(max_length=255)
     email = models.EmailField(max_length=255, null=True, unique=True)
     profile_image = models.ImageField(blank=True, upload_to="photo/%Y/%m/%d")
     location = models.ForeignKey(Location, related_name='users', null=True, on_delete=models.SET_NULL)
     
-    created_at = models.DateTimeField(auto_now_add=True, editable=False, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
     leaved_at = models.DateTimeField(null=True)
     last_login = models.DateTimeField(null=True)
     username_changed_at = models.DateTimeField(null=True)
