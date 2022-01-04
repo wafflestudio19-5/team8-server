@@ -35,7 +35,7 @@ class ArticleViewSet(viewsets.GenericViewSet):
         else:
             return Response({"해당하는 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
         if article.seller!=request.user:
-            return Response({"작성자 외에는 게시글을 삭제할 수 없습니다."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            return Response({"작성자 외에는 게시글을 삭제할 수 없습니다."}, status=status.HTTP_403_FORBIDDEN)
         
         article.delete()
         return Response({"success":True}, status=status.HTTP_200_OK)

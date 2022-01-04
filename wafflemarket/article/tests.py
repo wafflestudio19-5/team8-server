@@ -180,7 +180,7 @@ class PutArticleTestCase(TestCase):
         pk = str(self.article1.id) + '/'
         # no token
         data = self.put_data.copy()
-        response = self.client.put('/api/v1/article/'+pk, data=data)
+        response = self.client.put('/api/v1/article/'+pk, data=data, content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         self.check_article_not_changed(self.article1.id)
@@ -189,7 +189,7 @@ class PutArticleTestCase(TestCase):
         pk = str(self.article1.id) + '/'
         # invalid token
         data = self.put_data.copy()
-        response = self.client.put('/api/v1/article/'+pk, data=data, HTTP_AUTHORIZATION=self.user2_token)
+        response = self.client.put('/api/v1/article/'+pk, data=data, content_type='application/json', HTTP_AUTHORIZATION=self.user2_token)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         res_data = response.json()
@@ -201,7 +201,7 @@ class PutArticleTestCase(TestCase):
         # wrong pk
         wrong_pk = str(self.article1.id+3) + '/'
         data = self.put_data.copy()
-        response = self.client.put('/api/v1/article/'+wrong_pk, data=data, HTTP_AUTHORIZATION=self.user1_token)
+        response = self.client.put('/api/v1/article/'+wrong_pk, data=data, content_type='application/json', HTTP_AUTHORIZATION=self.user1_token)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
         res_data = response.json()
@@ -273,3 +273,81 @@ class PutArticleTestCase(TestCase):
         self.assertEqual(article.title, '삼성 노트북 판매')
         self.assertEqual(article.content, '성능 좋은 삼성 노트북 판매해요.')
         self.assertEqual(article.category, '생활가전')
+
+
+class DeleteArticleTestCase(TestCase):
+    
+    @classmethod
+    def setUp(cls):
+        cls.user1 = UserFactory(
+            phone_number='01011112222',
+            username='steve'
+        )
+        cls.user1_token = 'JWT ' + jwt_token_of(User.objects.get(phone_number='01011112222'))
+        cls.user2 = UserFactory(
+            phone_number='01022223333',
+            username='mark'
+        )
+        cls.user2_token = 'JWT ' + jwt_token_of(User.objects.get(phone_number='01022223333'))
+
+        cls.location1 = LocationFactory(
+            code='1111011700',
+            place_name='서울특별시 종로구 당주동'
+        )
+        cls.user1.location = cls.location1
+        cls.user1.save()
+
+        cls.article1 = ArticleFactory(
+            seller=cls.user1,
+            location=cls.location1,
+            price=3040000,
+            title='맥북 판매',
+            content='성능 좋은 맥북 판매해요.',
+            category='디지털기기'
+        )
+
+    def check_article_not_deleted(self, article_id):
+        article = Article.objects.filter(id=article_id)
+        self.assertEqual(article.count(), 1)
+        article = article[0]
+        self.assertIsNone(article.deleted_at)
+    
+    def test_delete_article_no_login(self):
+        pk = str(self.article1.id) + '/'
+        # no token
+        response = self.client.delete('/api/v1/article/'+pk)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        self.check_article_not_deleted(self.article1.id)
+
+    def test_delete_article_not_seller(self):
+        pk = str(self.article1.id) + '/'
+        # invalid token
+        response = self.client.delete('/api/v1/article/'+pk, HTTP_AUTHORIZATION=self.user2_token)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        res_data = response.json()
+        self.assertEqual(res_data[0], '작성자 외에는 게시글을 삭제할 수 없습니다.')
+
+        self.check_article_not_deleted(self.article1.id)
+
+    def test_delete_article_wrong_id(self):
+        # wrong pk
+        wrong_pk = str(self.article1.id+3) + '/'
+        response = self.client.delete('/api/v1/article/'+wrong_pk, HTTP_AUTHORIZATION=self.user1_token)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        res_data = response.json()
+        self.assertEqual(res_data[0], '해당하는 게시글을 찾을 수 없습니다.')
+
+        self.check_article_not_deleted(self.article1.id)
+
+    def test_delete_article_success(self):
+        article_id = self.article1.id
+        pk = str(self.article1.id) + '/'
+        # sucessively delete article
+        response = self.client.put('/api/v1/article/'+pk, HTTP_AUTHORIZATION=self.user1_token)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        article = Article.objects.filter(id=article_id)
+        self.assertEqual(article.count(), 0)
