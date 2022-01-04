@@ -56,6 +56,9 @@ class UserCreateSerializer(serializers.Serializer):
     phone_number = serializers.CharField(required=True)
     username = serializers.CharField(required=True)
     profile_image = serializers.ImageField(required=False)
+    password = serializers.CharField(required=False)
+    is_superuser = serializers.BooleanField(required=False, default=False)
+    is_staff = serializers.BooleanField(required=False, default=False)
 
     def validate(self, data):
         p = re.compile(r'^\d{2,3}\d{3,4}\d{4}$')
@@ -73,7 +76,13 @@ class UserCreateSerializer(serializers.Serializer):
         return data
 
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
+        is_staff = validated_data.get('is_staff')
+        is_superuser = validated_data.get('is_superuser')
+        password = validated_data.get('password')
+        if is_staff == True and is_superuser == True and password:
+            user = User.objects.create_superuser(**validated_data)
+        else:
+            user = User.objects.create_user(**validated_data)
         user.save()
         return user, jwt_token_of(user)
     
