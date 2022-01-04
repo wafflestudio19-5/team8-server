@@ -11,7 +11,7 @@ from .models import User, Auth
 import re
 from django.utils import timezone
 import datetime
-# from location.serializers import LocationSerializer
+from location.serializers import LocationSerializer
 
 User = get_user_model()
 JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
