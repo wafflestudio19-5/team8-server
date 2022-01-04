@@ -76,7 +76,7 @@ THIRD_PARTY_APPS = [
     'rest_framework_jwt',
     'rest_framework.authtoken',
     'six',
-    'storages'
+    'storages',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + PROJECT_APPS + THIRD_PARTY_APPS
@@ -198,3 +198,16 @@ JWT_AUTH = {
 
 # Custom User Model
 AUTH_USER_MODEL = 'user.User'
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'api_key': {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'Authorization'
+        }
+    },
+}
