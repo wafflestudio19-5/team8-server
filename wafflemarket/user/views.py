@@ -1,10 +1,12 @@
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.db import IntegrityError
-from rest_framework import status, viewsets, permissions
+from rest_framework import serializers, status, viewsets, permissions
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .serializers import UserLoginSerializer, UserCreateSerializer,  UserAuthSerializer, UserSerializer, UserUpdateSerializer, UserCategorySerializer
+from article.serializers import ArticleSerializer
+from article.models import Article
 
 User = get_user_model()
 
@@ -121,4 +123,18 @@ class UserCategoryView(APIView):
         user = request.user
         data = self.get_list(user)
         return Response(data, status=status.HTTP_200_OK)
+    
+class UserHistoryView(APIView):
+    permission_classes = (permissions.IsAuthenticated, )
+    serializer_class = ArticleSerializer
+    queryset = Article.objects.all()
+    
+    def retrieve(self, request, pk):
+        if pk==1: #구매내역 : 1
+            article = Article.objects.filter(buyer=request.user)
+            return Response(self.get_serializer(article, many=True), status=status.HTTP_200_OK)
+        elif pk==2: #판매내역 : 2
+            article = Article.objects.filter(seller=request.user)
+            return Response(self.get_serializer(article, many=True), status=status.HTTP_200_OK)
+            
     
