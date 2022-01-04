@@ -1,6 +1,7 @@
 from abc import ABC
 from rest_framework import serializers
 from .models import Article
+from user.models import User
 from user.serializers import UserSimpleSerializer
 
 
@@ -74,4 +75,3 @@ class ArticleSerializer(serializers.ModelSerializer):
             return "거래중"
         else:
             return UserSimpleSerializer(article.buyer, context=self.context).data
-    
