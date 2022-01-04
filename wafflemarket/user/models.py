@@ -9,6 +9,7 @@ import hmac
 import base64
 import datetime 
 from location.models import Location
+from wafflemarket.settings import get_secret
 
 class CustomUserManager(BaseUserManager):
     use_in_migrations = True
@@ -42,7 +43,7 @@ class Auth(models.Model):
         timestamp = str(int(time.time() * 1000))
         uri = '/sms/v2/services/ncp:sms:kr:260182270275:wafflemarket/messages'
         access_key = "Ih1hTs3EV9rU2KxKUdiG"
-        secret_key =  "R7CAqhYuxYbfOFTg8RFxhGcoq9SlczRiOAEOivR4"
+        secret_key =  get_secret("SMS_SECRET_KEY")
         
         data = {
         "type":"SMS",
