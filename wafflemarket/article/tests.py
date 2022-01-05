@@ -63,7 +63,6 @@ class PostArticleTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         res_data = response.json()
-        self.assertEqual(res_data['price'], ['This field is required.'])
         self.assertEqual(res_data['title'], ['This field is required.'])
         self.assertEqual(res_data['content'], ['This field is required.'])
         self.assertEqual(res_data['category'], ['This field is required.'])

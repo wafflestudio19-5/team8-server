@@ -10,7 +10,7 @@ class ArticleCreateSerializer(serializers.Serializer):
     content = serializers.CharField(required=True)
     # product_image = serializers.ImageField(required=False)
     category = serializers.CharField(required=True)
-    price = serializers.IntegerField(required=True)
+    price = serializers.IntegerField(required=False)
 
     def validate(self, data):
         price = data.get('price')
