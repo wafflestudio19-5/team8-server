@@ -8,6 +8,7 @@ from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework_jwt.settings import api_settings
 from django.http import HttpResponseBadRequest
 from .models import User, Auth
+from article.models import Article
 import re
 from django.utils import timezone
 import datetime
@@ -124,6 +125,7 @@ class UserLoginSerializer(serializers.Serializer):
         
 class UserSerializer(serializers.ModelSerializer):
     location = serializers.SerializerMethodField(read_only=True)
+    article_cnt = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
@@ -139,20 +141,31 @@ class UserSerializer(serializers.ModelSerializer):
             'username_changed_at',
             'is_active',
             'location'
+            'article_cnt'
         )
 
     def get_location(self, user):
-        #return LocationSerializer(user.location, context=self.context).data
-        return "미완"
+        return LocationSerializer(user.location, context=self.context).data
+    
+    def get_article_cnt(self, user):
+        article_cnt = Article.objects.filter(seller=user).count()
+        return article_cnt
     
 class UserSimpleSerializer(serializers.ModelSerializer):
+    article_cnt = serializers.SerializerMethodField(read_only=True)
+    
     class Meta:
         model = User
         fields = (
             'id',
             'username',
+            'article_cnt'
             #'profile_image'
         )
+    
+    def get_article_cnt(self, user):
+        article_cnt = Article.objects.filter(seller=user).count()
+        return article_cnt
 
 
 class UserUpdateSerializer(serializers.Serializer):
