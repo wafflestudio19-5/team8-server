@@ -146,12 +146,12 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_location(self, user):
         return LocationSerializer(user.location, context=self.context).data
-    
     def get_article_cnt(self, user):
         article_cnt = Article.objects.filter(seller=user).count()
         return article_cnt
     
 class UserSimpleSerializer(serializers.ModelSerializer):
+    location = serializers.SerializerMethodField(read_only=True)
     article_cnt = serializers.SerializerMethodField(read_only=True)
     
     class Meta:
@@ -159,10 +159,12 @@ class UserSimpleSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'username',
+            'location',
             'article_cnt'
             #'profile_image'
         )
-    
+    def get_location(self, user):
+        return LocationSerializer(user.location, context=self.context).data
     def get_article_cnt(self, user):
         article_cnt = Article.objects.filter(seller=user).count()
         return article_cnt

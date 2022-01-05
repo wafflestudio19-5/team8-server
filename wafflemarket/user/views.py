@@ -4,7 +4,7 @@ from rest_framework import status, viewsets, permissions
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .serializers import UserLoginSerializer, UserCreateSerializer,  UserAuthSerializer, UserSerializer, UserUpdateSerializer
+from .serializers import UserLoginSerializer, UserCreateSerializer,  UserAuthSerializer, UserSerializer, UserUpdateSerializer, UserSimpleSerializer
 
 User = get_user_model()
 
@@ -93,3 +93,17 @@ class UserViewSet(viewsets.GenericViewSet):
         except:
             pass
         return Response(self.get_serializer(user).data, status=status.HTTP_200_OK)
+    
+    def retrieve(self, request, pk=None):
+        if pk is not None:
+            if User.objects.filter(id=pk).exists():
+                user = User.objects.get(id=pk)
+                if user==request.user:
+                    return Response(self.get_serializer(user).data, status=status.HTTP_200_OK)
+                else:
+                    return Response(UserSimpleSerializer(user).data, status=status.HTTP_200_OK)
+            else:
+                return Response({"해당하는 유저를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)  
+        else:
+            user = request.user
+            return Response(self.get_serializer(user).data, status=status.HTTP_200_OK)
