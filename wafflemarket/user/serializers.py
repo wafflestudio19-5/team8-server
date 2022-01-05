@@ -140,7 +140,7 @@ class UserSerializer(serializers.ModelSerializer):
             'leaved_at',
             'username_changed_at',
             'is_active',
-            'location'
+            'location',
             'article_cnt'
         )
 
