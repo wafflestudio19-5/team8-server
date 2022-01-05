@@ -345,7 +345,7 @@ class DeleteArticleTestCase(TestCase):
         article_id = self.article1.id
         pk = str(self.article1.id) + '/'
         # sucessively delete article
-        response = self.client.put('/api/v1/article/'+pk, HTTP_AUTHORIZATION=self.user1_token)
+        response = self.client.delete('/api/v1/article/'+pk, HTTP_AUTHORIZATION=self.user1_token)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         article = Article.objects.filter(id=article_id)
