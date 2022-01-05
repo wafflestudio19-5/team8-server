@@ -42,7 +42,7 @@ class Auth(models.Model):
         url = 'https://sens.apigw.ntruss.com/sms/v2/services/ncp:sms:kr:260182270275:wafflemarket/messages'
         timestamp = str(int(time.time() * 1000))
         uri = '/sms/v2/services/ncp:sms:kr:260182270275:wafflemarket/messages'
-        access_key = "Ih1hTs3EV9rU2KxKUdiG"
+        access_key = "M1m2A6EjuLtlG6uiRYpt"
         secret_key =  get_secret("SMS_SECRET_KEY")
         
         data = {
