@@ -179,7 +179,7 @@ class UserUpdateSerializer(serializers.Serializer):
     
     def update(self, user, validated_data):
         username = validated_data.get('username')
-        if username!=user.username:
+        if username!=user.username and username is not None:
             user.username = username
             user.username_changed_at = timezone.now()
             user.save()
