@@ -1,10 +1,19 @@
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.db import IntegrityError
-from rest_framework import status, viewsets, permissions
+from rest_framework import serializers, status, viewsets, permissions
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .serializers import UserLoginSerializer, UserCreateSerializer,  UserAuthSerializer, UserSerializer, UserUpdateSerializer
+
+import requests
+from django.core.exceptions import ValidationError
+from google.oauth2 import id_token
+from google.auth.transport.requests import Request
+import os
+import wafflemarket.settings as settings
+from django.shortcuts import render
+from django.http import HttpResponse
 
 User = get_user_model()
 
@@ -14,11 +23,19 @@ def login(data):
     location_exists = serializer.location_exists(data=data)
     serializer.is_valid(raise_exception=True)
                 
-    phone_number = serializer.validated_data['phone_number']
-    username = serializer.validated_data['username']
-    token = serializer.validated_data['token']
-    return {'phone_number': phone_number, 'username' : username, 'logined': True, 'first_login' : first_login, 'location_exists' : location_exists, 'token' : token}
-
+    phone_number = serializer.validated_data.get('phone_number')
+    email = serializer.validated_data.get('email')
+    username = serializer.validated_data.get('username')
+    token = serializer.validated_data.get('token')
+    return {
+    'phone_number': phone_number,
+    'email': email,
+    'username' : username,
+    'logined': True, 
+    'first_login' : first_login, 
+    'location_exists' : location_exists, 
+    'token' : token
+    }
 
 class UserAuthView(APIView):
     permission_classes = (permissions.AllowAny, )
@@ -50,7 +67,52 @@ class UserSignUpView(APIView):
         except IntegrityError:
             return Response(login(request.data), status=status.HTTP_200_OK)
         return Response(login(request.data), status=status.HTTP_201_CREATED)
-    
+
+class GoogleSigninCallBackApi(APIView):
+    permission_classes = (permissions.AllowAny, )
+
+    def get(self, request, *args, **kwargs):
+        if settings.DEBUG:
+            return render(request, 'user/logintest.html')
+        else:
+            return HttpResponse(status=404)
+
+    def post(self, request, *args, **kwargs):
+        token = request.data.get('token')
+        
+        # verifying access_token
+        try:
+            idinfo = id_token.verify_oauth2_token(token, Request(), os.getenv('GOOGLE_CLIENT_ID'))
+            userid = idinfo['sub']
+        except ValueError:
+            pass
+
+        # request google to get user info
+        user_info_response = requests.get(
+            "https://oauth2.googleapis.com/tokeninfo",
+            params={ 'id_token': token }
+        )
+        if not user_info_response.ok:
+            raise ValidationError('Failed to obtain user info from Google.')
+        user_info = user_info_response.json()
+        
+        username = user_info.get('family_name', '')+user_info.get('given_name', '')
+        username = username.replace(' ', '').replace('\xad', '')
+        profile_data = {
+            'email': user_info['email'],
+            'username': username,
+            'profile_image': user_info.get('picture', None)
+        }
+        
+        # signup or login with given info
+        serializer = UserCreateSerializer(data=profile_data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            user, jwt_token = serializer.save()
+        except IntegrityError:
+            return Response(login(profile_data), status=status.HTTP_200_OK)
+        return Response(login(profile_data), status=status.HTTP_201_CREATED)
+
     
 class UserLogoutView(APIView):
     permission_classes = (permissions.IsAuthenticated, )

@@ -13,17 +13,17 @@ from location.models import Location
 class CustomUserManager(BaseUserManager):
     use_in_migrations = True
     
-    def create_user(self, phone_number, **extra_fields):
+    def create_user(self, **extra_fields):
         extra_fields.setdefault('is_staff', False)
         extra_fields.setdefault('is_superuser', False)
-        user = self.model(phone_number=phone_number, **extra_fields)
+        user = self.model(**extra_fields)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, phone_number, password, **extra_fields):
+    def create_superuser(self, password, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        user = self.model(phone_number=phone_number, **extra_fields)
+        user = self.model(**extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
