@@ -200,5 +200,33 @@ class UserUpdateSerializer(serializers.Serializer):
             user.save()
         return user
     
+class UserCategorySerializer(serializers.Serializer):
+    category = serializers.CharField(required=True)
+    enabled = serializers.BooleanField(required=True)
+    
+    def validate(self, data):
+        category = data.get('category')
+        category_list = ['디지털기기', '가구/인테리어', '생활/가공식품', '스포츠/레저', '여성의류', '게임/취미', '반려동물용품', '식물',
+                         '삽니다', '생활가전', '유아동', '유아도서', '여성잡화', '남성패션/잡화', '뷰티/미용', '도서/티켓/음반', '기타 중고물품']
         
+        if category not in category_list:
+            raise serializers.ValidationError("카테고리가 부적절해요.")
+        return data
+    
+    def update(self, user, validated_data):
+        category = validated_data.get('category')
+        enabled = validated_data.get('enabled')
+        category_code = {'디지털기기':0, '가구/인테리어':1, '생활/가공식품':2, '스포츠/레저':3, 
+                         '여성의류':4, '게임/취미':5, '반려동물용품':6, '식물':7,
+                         '삽니다':8, '생활가전':9, '유아동':10, '유아도서':11, '여성잡화' :12, 
+                         '남성패션/잡화': 13, '뷰티/미용':14, '도서/티켓/음반':15, '기타 중고물품':16}
+        code = category_code[category]
+        if enabled is True: 
+            enabled = "1"
+        else:
+            enabled = "0"
+        interest = list(user.interest)
+        interest[code] = enabled
+        user.interest = ''.join(interest)
+        user.save()      
 
