@@ -24,7 +24,7 @@ class LocationView(APIView):
         return Response(UserLocationSerializer(user).data, status=status.HTTP_200_OK)
 
 class NeighborhoodView(APIView):
-    permission_classes = (permissions.AllowAny, )
+    permission_classes = (permissions.IsAuthenticated, )
 
     @swagger_auto_schema(request_body=UserLocationValidator, responses={200: NeighborhoodSerializer(many=True)})
     # returns neighborhood of given location
