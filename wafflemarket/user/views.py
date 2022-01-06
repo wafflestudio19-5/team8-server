@@ -129,12 +129,18 @@ class UserHistoryView(APIView):
     serializer_class = ArticleSerializer
     queryset = Article.objects.all()
     
-    def retrieve(self, request, pk):
+    def get(self, request, pk=None):
         if pk==1: #구매내역 : 1
             article = Article.objects.filter(buyer=request.user)
-            return Response(self.get_serializer(article, many=True), status=status.HTTP_200_OK)
+            return Response(ArticleSerializer(article, many=True).data, status=status.HTTP_200_OK)
         elif pk==2: #판매내역 : 2
-            article = Article.objects.filter(seller=request.user)
-            return Response(self.get_serializer(article, many=True), status=status.HTTP_200_OK)
+            sold = request.query_params.get('sold')
+            if sold=='true':
+                article = Article.objects.filter(seller=request.user, sold_at__isnull=False).order_by('created_at')
+            elif sold=='false':
+                article = Article.objects.filter(seller=request.user, sold_at__isnull=True).order_by('created_at')
+            else:
+                article = Article.objects.filter(seller=request.user).order_by('created_at')
+            return Response(ArticleSerializer(article, many=True).data, status=status.HTTP_200_OK)
             
     
