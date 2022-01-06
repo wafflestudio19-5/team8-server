@@ -57,7 +57,7 @@ class UserCreateSerializer(serializers.Serializer):
     phone_number = serializers.CharField(required=False)
     email = serializers.EmailField(required=False)
     username = serializers.CharField(required=True)
-    # profile_image = serializers.ImageField(required=False)
+    profile_image = serializers.ImageField(required=False)
     password = serializers.CharField(required=False)
     is_superuser = serializers.BooleanField(required=False, default=False)
     is_staff = serializers.BooleanField(required=False, default=False)
@@ -176,10 +176,10 @@ class UserUpdateSerializer(serializers.Serializer):
     profile_image = serializers.ImageField(required=False)
     
     def validate(self, data):
-        u = re.compile((r'^[가-힣a-zA-Z0-9]+$'))
+        u = re.compile((r'^[^&=_\'-+,<>]+$'))
         username = data.get('username')
         if username is not None and u.match(username) is None:
-            raise serializers.ValidationError("닉네임은 띄어쓰기 없이 영문 한글 숫자만 가능해요.")
+            raise serializers.ValidationError("올바른 닉네임을 입력해주세요.")
         
         return data
     
