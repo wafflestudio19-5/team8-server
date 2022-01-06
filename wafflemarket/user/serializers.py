@@ -142,7 +142,17 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
     def get_location(self, user):
-        return LocationSerializer(user.location, context=self.context).data
+        #return LocationSerializer(user.location, context=self.context).data
+        return "미완"
+    
+class UserSimpleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'username',
+            #'profile_image'
+        )
 
 
 class UserUpdateSerializer(serializers.Serializer):

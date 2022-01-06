@@ -41,14 +41,15 @@ class PostLocationTestCase(TestCase):
             'location_code': '1111011700'
         }
     
-    def test_post_location_wrong_information(self):
+    def test_post_location_no_login(self):
         # no token
         data = self.post_data.copy()
         response = self.client.post('/api/v1/location/', data=data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-        self.assertEqual(self.user.location, None)
+        self.assertEqual(User.objects.filter(location=self.location1).count(), 0)
 
+    def test_post_location_wrong_information(self):
         # no location code
         data = self.post_data.copy()
         data.pop('location_code')
@@ -57,7 +58,7 @@ class PostLocationTestCase(TestCase):
 
         res_data = response.json()
         self.assertEqual(res_data['location_code'], ['This field is required.'])
-        self.assertEqual(self.user.location, None)
+        self.assertEqual(User.objects.filter(location=self.location1).count(), 0)
 
         # invalid location code
         data = self.post_data.copy()
@@ -67,7 +68,7 @@ class PostLocationTestCase(TestCase):
 
         res_data = response.json()
         self.assertEqual(res_data['non_field_errors'], ['올바른 지역코드가 아닙니다.'])
-        self.assertEqual(self.user.location, None)
+        self.assertEqual(User.objects.filter(location=self.location1).count(), 0)
 
     def test_post_location_sucess(self):
         # successively change user's location info
@@ -78,7 +79,7 @@ class PostLocationTestCase(TestCase):
         res_data = response.json()
         self.assertEqual(res_data['username'], 'steve')
         self.assertEqual(res_data['location'], '서울특별시 종로구 당주동')
-        self.assertEqual(User.objects.get(location=self.location1).phone_number, '01011112222')
+        self.assertEqual(User.objects.get(location=self.location1).id, self.user.id)
 
 class GetLocationTestCase(TestCase):
     
@@ -104,7 +105,7 @@ class GetLocationTestCase(TestCase):
         )
         LocationNeighborhood.objects.create(location=cls.location1,neighborhood=cls.location2)
     
-    def test_get_location_wrong_information(self):
+    def test_get_location_no_login(self):
         # no token
         response = self.client.get('/api/v1/location/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -148,7 +149,7 @@ class GetNeighborhoodTestCase(TestCase):
         )
         LocationNeighborhood.objects.create(location=cls.location1,neighborhood=cls.location3)
     
-    def test_get_neighborhood_wrong_information(self):
+    def test_get_neighborhood_no_login(self):
         # no token
         response = self.client.get('/api/v1/location/neighborhood/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
