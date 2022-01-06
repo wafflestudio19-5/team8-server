@@ -85,23 +85,15 @@ class GoogleSigninCallBackApi(APIView):
             idinfo = id_token.verify_oauth2_token(token, Request(), os.getenv('GOOGLE_CLIENT_ID'))
             userid = idinfo['sub']
         except ValueError:
-            pass
-
-        # request google to get user info
-        user_info_response = requests.get(
-            "https://oauth2.googleapis.com/tokeninfo",
-            params={ 'id_token': token }
-        )
-        if not user_info_response.ok:
-            raise ValidationError('Failed to obtain user info from Google.')
-        user_info = user_info_response.json()
+            return Response(data='올바른 토큰이 아닙니다.', status=status.HTTP_400_BAD_REQUEST)
         
-        username = user_info.get('family_name', '')+user_info.get('given_name', '')
+        # get user information
+        username = idinfo.get('family_name', '')+idinfo.get('given_name', '')
         username = username.replace(' ', '').replace('\xad', '')
         profile_data = {
-            'email': user_info['email'],
+            'email': idinfo['email'],
             'username': username,
-            'profile_image': user_info.get('picture', None)
+            'profile_image': idinfo.get('picture', None)
         }
         
         # signup or login with given info
