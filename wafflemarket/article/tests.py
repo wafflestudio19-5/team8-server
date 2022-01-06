@@ -11,6 +11,7 @@ import json
 from user.serializers import jwt_token_of, UserSerializer
 from user.tests import UserFactory
 from location.tests import LocationFactory
+from django.utils import timezone
 
 
 class ArticleFactory(DjangoModelFactory):
@@ -350,3 +351,416 @@ class DeleteArticleTestCase(TestCase):
 
         article = Article.objects.filter(id=article_id)
         self.assertEqual(article.count(), 0)
+
+class PutPurchaseTestCase(TestCase):
+    @classmethod
+    def setUp(cls):
+        cls.user1 = UserFactory(
+            phone_number='01011112222',
+            username='steve'
+        )
+        cls.user1_token = 'JWT ' + jwt_token_of(User.objects.get(phone_number='01011112222'))
+        cls.user2 = UserFactory(
+            phone_number='01022223333',
+            username='mark'
+        )
+        cls.user2_token = 'JWT ' + jwt_token_of(User.objects.get(phone_number='01022223333'))
+
+        cls.location1 = LocationFactory(
+            code='1111011700',
+            place_name='서울특별시 종로구 당주동'
+        )
+        cls.user1.location = cls.location1
+        cls.user1.save()
+
+        cls.article = ArticleFactory(
+            seller=cls.user1,
+            location=cls.location1,
+            price=3040000,
+            title='맥북 판매',
+            content='성능 좋은 맥북 판매해요.',
+            category='디지털기기'
+        )
+        
+    def check_article_not_changed(self, article_id):
+        article = Article.objects.get(id=article_id)
+        self.assertEqual(article.price, 3040000)
+        self.assertEqual(article.title, '맥북 판매')
+        self.assertEqual(article.content, '성능 좋은 맥북 판매해요.')
+        self.assertEqual(article.category, '디지털기기')
+        self.assertIsNone(article.sold_at)
+        self.assertIsNone(article.buyer)
+    
+    def test_put_purchase_no_login(self):
+        pk = str(self.article.id)
+        # no token
+        response = self.client.put('/api/v1/article/{}/purchase/'.format(pk), data={}, content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        self.check_article_not_changed(self.article.id)
+
+    def test_put_purchase_not_seller(self):
+        pk = str(self.article.id)
+        # invalid token
+        response = self.client.put('/api/v1/article/{}/purchase/'.format(pk), data={}, content_type='application/json', HTTP_AUTHORIZATION=self.user2_token)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        res_data = response.json()
+        self.assertEqual(res_data[0], '작성자 외에는 게시글의 상태를 변경할 수 없습니다.')
+
+        self.check_article_not_changed(self.article.id)
+
+    def test_put_purchase_wrong_id(self):
+        # wrong pk
+        wrong_pk = str(self.article.id+3)
+        response = self.client.put('/api/v1/article/{}/purchase/'.format(wrong_pk), data={}, content_type='application/json', HTTP_AUTHORIZATION=self.user1_token)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        res_data = response.json()
+        self.assertEqual(res_data[0], '해당하는 게시글을 찾을 수 없습니다.')
+
+        self.check_article_not_changed(self.article.id)
+        
+    def test_put_purchase_success(self):
+        pk = str(self.article.id)
+        # sucessively change article sold_at field
+        response = self.client.put('/api/v1/article/{}/purchase/'.format(pk), data={}, content_type='application/json', HTTP_AUTHORIZATION=self.user1_token)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        article = Article.objects.get(id=self.article.id)
+        self.assertIsNotNone(article.sold_at)
+        self.assertIsNone(article.buyer)
+        
+        article = Article.objects.filter(id=self.article.id)
+        self.assertEqual(article.count(), 1)      
+        
+class DeletePurchaseTestCase(TestCase):
+    @classmethod
+    def setUp(cls):
+        cls.user1 = UserFactory(
+            phone_number='01011112222',
+            username='steve'
+        )
+        cls.user1_token = 'JWT ' + jwt_token_of(User.objects.get(phone_number='01011112222'))
+        cls.user2 = UserFactory(
+            phone_number='01022223333',
+            username='mark'
+        )
+        cls.user2_token = 'JWT ' + jwt_token_of(User.objects.get(phone_number='01022223333'))
+
+        cls.location1 = LocationFactory(
+            code='1111011700',
+            place_name='서울특별시 종로구 당주동'
+        )
+        cls.user1.location = cls.location1
+        cls.user1.save()
+
+        cls.article = ArticleFactory(
+            seller=cls.user1,
+            location=cls.location1,
+            price=3040000,
+            title='맥북 판매',
+            content='성능 좋은 맥북 판매해요.',
+            category='디지털기기',
+            sold_at = timezone.now(),
+            buyer=cls.user2
+        )
+        
+    def check_article_not_changed(self, article_id):
+        article = Article.objects.get(id=article_id)
+        user2 = User.objects.get(phone_number = '01022223333')
+        self.assertEqual(article.price, 3040000)
+        self.assertEqual(article.title, '맥북 판매')
+        self.assertEqual(article.content, '성능 좋은 맥북 판매해요.')
+        self.assertEqual(article.category, '디지털기기')
+        self.assertEqual(article.category, '디지털기기')
+        self.assertIsNotNone(article.sold_at)
+        self.assertEqual(article.buyer, user2)
+    
+    def test_delete_purchase_no_login(self):
+        pk = str(self.article.id)
+        # no token
+        response = self.client.delete('/api/v1/article/{}/purchase/'.format(pk), data={}, content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        self.check_article_not_changed(self.article.id)
+
+    def test_delete_purchase_not_seller(self):
+        pk = str(self.article.id)
+        # invalid token
+        response = self.client.delete('/api/v1/article/{}/purchase/'.format(pk), data={}, content_type='application/json', HTTP_AUTHORIZATION=self.user2_token)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        res_data = response.json()
+        self.assertEqual(res_data[0], '작성자 외에는 게시글의 상태를 변경할 수 없습니다.')
+
+        self.check_article_not_changed(self.article.id)
+
+    def test_delete_purchase_wrong_id(self):
+        # wrong pk
+        wrong_pk = str(self.article.id+3)
+        response = self.client.delete('/api/v1/article/{}/purchase/'.format(wrong_pk), data={}, content_type='application/json', HTTP_AUTHORIZATION=self.user1_token)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        res_data = response.json()
+        self.assertEqual(res_data[0], '해당하는 게시글을 찾을 수 없습니다.')
+
+        self.check_article_not_changed(self.article.id)
+        
+    def test_delete_purchase_success(self):
+        pk = str(self.article.id)
+        # sucessively change article sold_at field
+        response = self.client.delete('/api/v1/article/{}/purchase/'.format(pk), data={}, content_type='application/json', HTTP_AUTHORIZATION=self.user1_token)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        article = Article.objects.get(id=self.article.id)
+        self.assertIsNone(article.sold_at)
+        self.assertIsNone(article.buyer)
+        
+        article = Article.objects.filter(id=self.article.id)
+        self.assertEqual(article.count(), 1)
+
+
+
+class PutBuyerTestCase(TestCase):
+    @classmethod
+    def setUp(cls):
+        cls.user1 = UserFactory(
+            phone_number='01011112222',
+            username='steve'
+        )
+        cls.user1_token = 'JWT ' + jwt_token_of(User.objects.get(phone_number='01011112222'))
+        cls.user2 = UserFactory(
+            phone_number='01022223333',
+            username='mark'
+        )
+        cls.user2_token = 'JWT ' + jwt_token_of(User.objects.get(phone_number='01022223333'))
+
+        cls.location1 = LocationFactory(
+            code='1111011700',
+            place_name='서울특별시 종로구 당주동'
+        )
+        cls.user1.location = cls.location1
+        cls.user1.save()
+
+        cls.article1 = ArticleFactory(
+            seller=cls.user1,
+            location=cls.location1,
+            price=3040000,
+            title='맥북 판매',
+            content='성능 좋은 맥북 판매해요.',
+            category='디지털기기',
+            sold_at=timezone.now(),
+            buyer=None
+        )
+        
+        cls.article2 = ArticleFactory(
+            seller=cls.user1,
+            location=cls.location1,
+            price=3040000,
+            title='맥북 판매',
+            content='성능 좋은 맥북 판매해요.',
+            category='디지털기기',
+            sold_at=None,
+            buyer=None
+        )
+        
+        cls.put_data = {'buyer_id' : cls.user2.id}
+        
+    def check_article_not_changed(self, article_id):
+        article = Article.objects.get(id=article_id)
+        self.assertEqual(article.price, 3040000)
+        self.assertEqual(article.title, '맥북 판매')
+        self.assertEqual(article.content, '성능 좋은 맥북 판매해요.')
+        self.assertEqual(article.category, '디지털기기')
+        self.assertIsNotNone(article.sold_at)
+        self.assertIsNone(article.buyer)
+    
+    def test_put_buyer_no_login(self):
+        pk = str(self.article1.id)
+        # no token
+        response = self.client.put('/api/v1/article/{}/buyer/'.format(pk), data=self.put_data, content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        self.check_article_not_changed(self.article1.id)
+
+    def test_put_buyer_not_seller(self):
+        pk = str(self.article1.id)
+        # invalid token
+        response = self.client.put('/api/v1/article/{}/buyer/'.format(pk), data=self.put_data, content_type='application/json', HTTP_AUTHORIZATION=self.user2_token)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        res_data = response.json()
+        self.assertEqual(res_data[0], '작성자 외에는 게시글의 상태를 변경할 수 없습니다.')
+
+        self.check_article_not_changed(self.article1.id)
+
+    def test_put_buyer_wrong_article_id(self):
+        # wrong pk
+        wrong_pk = str(self.article1.id+3)
+        response = self.client.put('/api/v1/article/{}/buyer/'.format(wrong_pk), data=self.put_data, content_type='application/json', HTTP_AUTHORIZATION=self.user1_token)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        res_data = response.json()
+        self.assertEqual(res_data[0], '해당하는 게시글을 찾을 수 없습니다.')
+
+        self.check_article_not_changed(self.article1.id)
+    
+    def test_put_buyer_article_not_sold(self):
+        # article not sold
+        pk = str(self.article2.id)
+        response = self.client.put('/api/v1/article/{}/buyer/'.format(pk), data=self.put_data, content_type='application/json', HTTP_AUTHORIZATION=self.user1_token)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
+        res_data = response.json()
+        self.assertEqual(res_data[0], '구매완료되지 않은 게시글에는 구매자가 없습니다.')
+        
+    def test_put_buyer_wrong_buyer_id(self):
+        pk = str(self.article1.id)
+        # invalid buyer_id
+        data = self.put_data.copy()
+        data['buyer_id']+=3
+        response = self.client.put('/api/v1/article/{}/buyer/'.format(pk), data=data, content_type='application/json', HTTP_AUTHORIZATION=self.user1_token)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        
+        res_data = response.json()
+        self.assertEqual(res_data[0], '해당하는 구매자를 찾을 수 없습니다.')
+        
+        self.check_article_not_changed(self.article1.id)
+        
+    def test_put_buyer_seller_equals_buyer(self):
+        pk = str(self.article1.id)
+        # invalid buyer_id
+        data = self.put_data.copy()
+        data['buyer_id']=self.user1.id
+        response = self.client.put('/api/v1/article/{}/buyer/'.format(pk), data=data, content_type='application/json', HTTP_AUTHORIZATION=self.user1_token)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
+        res_data = response.json()
+        self.assertEqual(res_data[0], '게시글의 작성자는 구매할 수 없습니다.')
+        
+        self.check_article_not_changed(self.article1.id)
+        
+    def test_put_buyer_success(self):
+        pk = str(self.article1.id)
+        # sucessively change article sold_at field
+        response = self.client.put('/api/v1/article/{}/buyer/'.format(pk), data=self.put_data, content_type='application/json', HTTP_AUTHORIZATION=self.user1_token)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        article = Article.objects.get(id=self.article1.id)
+        self.assertIsNotNone(article.sold_at)
+        
+        user2 = User.objects.get(phone_number='01022223333')
+        self.assertEqual(article.buyer, user2)
+        
+        articles = Article.objects.filter(id=self.article1.id)
+        self.assertEqual(articles.count(), 1)      
+        
+    
+class DeletePurchaseTestCase(TestCase):
+    @classmethod
+    def setUp(cls):
+        cls.user1 = UserFactory(
+            phone_number='01011112222',
+            username='steve'
+        )
+        cls.user1_token = 'JWT ' + jwt_token_of(User.objects.get(phone_number='01011112222'))
+        cls.user2 = UserFactory(
+            phone_number='01022223333',
+            username='mark'
+        )
+        cls.user2_token = 'JWT ' + jwt_token_of(User.objects.get(phone_number='01022223333'))
+
+        cls.location1 = LocationFactory(
+            code='1111011700',
+            place_name='서울특별시 종로구 당주동'
+        )
+        cls.user1.location = cls.location1
+        cls.user1.save()
+
+        cls.article1 = ArticleFactory(
+            seller=cls.user1,
+            location=cls.location1,
+            price=3040000,
+            title='맥북 판매',
+            content='성능 좋은 맥북 판매해요.',
+            category='디지털기기',
+            sold_at = timezone.now(),
+            buyer=cls.user2
+        )
+        
+        cls.article2 = ArticleFactory(
+            seller=cls.user1,
+            location=cls.location1,
+            price=3040000,
+            title='맥북 판매',
+            content='성능 좋은 맥북 판매해요.',
+            category='디지털기기',
+            sold_at=None,
+            buyer=None
+        )
+        
+    def check_article_not_changed(self, article_id):
+        article = Article.objects.get(id=article_id)
+        user2 = User.objects.get(phone_number = '01022223333')
+        self.assertEqual(article.price, 3040000)
+        self.assertEqual(article.title, '맥북 판매')
+        self.assertEqual(article.content, '성능 좋은 맥북 판매해요.')
+        self.assertEqual(article.category, '디지털기기')
+        self.assertEqual(article.category, '디지털기기')
+        self.assertIsNotNone(article.sold_at)
+        self.assertEqual(article.buyer, user2)
+    
+    def test_delete_buyer_no_login(self):
+        pk = str(self.article1.id)
+        # no token
+        response = self.client.delete('/api/v1/article/{}/buyer/'.format(pk), data={}, content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        self.check_article_not_changed(self.article1.id)
+
+    def test_delete_buyer_not_seller(self):
+        pk = str(self.article1.id)
+        # invalid token
+        response = self.client.delete('/api/v1/article/{}/buyer/'.format(pk), data={}, content_type='application/json', HTTP_AUTHORIZATION=self.user2_token)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        res_data = response.json()
+        self.assertEqual(res_data[0], '작성자 외에는 게시글의 상태를 변경할 수 없습니다.')
+
+        self.check_article_not_changed(self.article1.id)
+
+    def test_delete_buyer_wrong_id(self):
+        # wrong pk
+        wrong_pk = str(self.article1.id+3)
+        response = self.client.delete('/api/v1/article/{}/buyer/'.format(wrong_pk), data={}, content_type='application/json', HTTP_AUTHORIZATION=self.user1_token)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        res_data = response.json()
+        self.assertEqual(res_data[0], '해당하는 게시글을 찾을 수 없습니다.')
+
+        self.check_article_not_changed(self.article1.id)
+    
+    def test_put_buyer_article_not_sold(self):
+        # article not sold
+        pk = str(self.article2.id)
+        response = self.client.delete('/api/v1/article/{}/buyer/'.format(pk), data={}, content_type='application/json', HTTP_AUTHORIZATION=self.user1_token)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
+        res_data = response.json()
+        self.assertEqual(res_data[0], '구매완료되지 않은 게시글에는 구매자가 없습니다.')
+        
+    def test_delete_buyer_success(self):
+        pk = str(self.article1.id)
+        # sucessively change article sold_at field
+        response = self.client.delete('/api/v1/article/{}/buyer/'.format(pk), data={}, content_type='application/json', HTTP_AUTHORIZATION=self.user1_token)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        article = Article.objects.get(id=self.article1.id)
+        self.assertIsNotNone(article.sold_at)
+        self.assertIsNone(article.buyer)
+        
+        article = Article.objects.filter(id=self.article1.id)
+        self.assertEqual(article.count(), 1)
+
+

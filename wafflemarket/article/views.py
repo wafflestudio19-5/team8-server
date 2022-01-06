@@ -62,7 +62,7 @@ class ArticleViewSet(viewsets.GenericViewSet):
         else:
             return Response({"해당하는 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
         if article.seller!=request.user:
-            return Response({"작성자 외에는 게시글의 상태를 변경할 수 없습니다."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            return Response({"작성자 외에는 게시글의 상태를 변경할 수 없습니다."}, status=status.HTTP_403_FORBIDDEN)
         
         if self.request.method == 'PUT':
             article.sold_at = timezone.now()
@@ -81,14 +81,16 @@ class ArticleViewSet(viewsets.GenericViewSet):
         else:
             return Response({"해당하는 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
         if article.seller!=request.user:
-            return Response({"작성자 외에는 게시글의 상태를 변경할 수 없습니다."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            return Response({"작성자 외에는 게시글의 상태를 변경할 수 없습니다."}, status=status.HTTP_403_FORBIDDEN)
         if article.sold_at is None:
-            return Response({"구매완료되지 않은 게시글에는 구매자가 없습니다."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            return Response({"구매완료되지 않은 게시글에는 구매자가 없습니다."}, status=status.HTTP_403_FORBIDDEN)
         
         if self.request.method == 'PUT':
             buyer_id = request.data.get('buyer_id')
             if User.objects.filter(id=buyer_id).exists():
                 buyer = User.objects.get(id=buyer_id)
+                if buyer==article.seller:
+                    return Response({"게시글의 작성자는 구매할 수 없습니다."}, status=status.HTTP_403_FORBIDDEN)
                 article.buyer = buyer
                 article.save()
             else:
