@@ -137,15 +137,16 @@ class PutUserCategoryTestCase(TestCase):
             'category' : '디지털기기',
             'enabled' : 'False'
         }
-        
-    def test_put_category_wrong_information(self):
+    
+    def test_put_category_no_login(self):
         # no token
         data = self.put_data.copy()
         response = self.client.put('/api/v1/user/category/', data=data, content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         user = User.objects.get(phone_number='01033334444')
         self.assertEqual(user.interest, '1'*17)
-        
+
+    def test_put_category_wrong_information(self):
         # invalid category
         data = self.put_data.copy()
         data['category'] = 'invalid'
@@ -202,6 +203,7 @@ class GetUserCategoryTestCase(TestCase):
             interest = '11001100110011001'
         )
         cls.user_token = 'JWT ' + jwt_token_of(User.objects.get(phone_number='01011112222'))
+
     def test_get_category_success(self):
         response = self.client.get('/api/v1/user/category/', HTTP_AUTHORIZATION=self.user_token)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
