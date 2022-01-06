@@ -3,13 +3,14 @@ from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, Permis
 import requests
 from random import randint
 from django.utils import timezone
+import os
 import time
 import hashlib
 import hmac
 import base64
 import datetime 
 from location.models import Location
-from wafflemarket.settings import get_secret
+
 
 class CustomUserManager(BaseUserManager):
     use_in_migrations = True
@@ -52,7 +53,7 @@ class Auth(models.Model):
         timestamp = str(int(time.time() * 1000))
         uri = '/sms/v2/services/ncp:sms:kr:260182270275:wafflemarket/messages'
         access_key = "M1m2A6EjuLtlG6uiRYpt"
-        secret_key =  get_secret("SMS_SECRET_KEY")
+        secret_key =  os.getenv("SMS_SECRET_KEY")
         
         data = {
         "type":"SMS",

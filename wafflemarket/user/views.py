@@ -79,10 +79,11 @@ class GoogleSigninCallBackApi(APIView):
 
     def post(self, request, *args, **kwargs):
         token = request.data.get('token')
+        GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
         
         # verifying access_token
         try:
-            idinfo = id_token.verify_oauth2_token(token, Request(), os.getenv('GOOGLE_CLIENT_ID'))
+            idinfo = id_token.verify_oauth2_token(token, Request(), GOOGLE_CLIENT_ID)
             userid = idinfo['sub']
         except ValueError:
             return Response(data='올바른 토큰이 아닙니다.', status=status.HTTP_400_BAD_REQUEST)
