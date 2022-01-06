@@ -45,9 +45,9 @@ else:
     SECRET_KEY = get_secret("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['ec2-54-180-144-124.ap-northeast-2.compute.amazonaws.com', '54.180.144.124', '127.0.0.1']
+ALLOWED_HOSTS = ['ec2-54-180-144-124.ap-northeast-2.compute.amazonaws.com', '54.180.144.124', '127.0.0.1', 'localhost']
 
 SITE_ID = 1
 

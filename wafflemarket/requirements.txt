@@ -11,3 +11,4 @@ django-filter
 drf-yasg==1.20.0
 factory-boy
 django_storages
+django-google-oauth
