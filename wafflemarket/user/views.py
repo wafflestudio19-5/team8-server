@@ -4,7 +4,7 @@ from rest_framework import serializers, status, viewsets, permissions
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .serializers import UserLoginSerializer, UserCreateSerializer,  UserAuthSerializer, UserSerializer, UserUpdateSerializer
+from .serializers import UserLoginSerializer, UserCreateSerializer,  UserAuthSerializer, UserSerializer, UserUpdateSerializer, UserCategorySerializer
 
 import requests
 from django.core.exceptions import ValidationError
@@ -147,3 +147,32 @@ class UserViewSet(viewsets.GenericViewSet):
         except:
             pass
         return Response(self.get_serializer(user).data, status=status.HTTP_200_OK)
+    
+class UserCategoryView(APIView):
+    permission_classes = (permissions.IsAuthenticated, )
+    
+    @classmethod
+    def get_list(cls, user):
+        code_category = {0: '디지털기기', 1: '가구/인테리어', 2: '생활/가공식품', 3: '스포츠/레저', 
+                        4: '여성의류', 5: '게임/취미', 6: '반려동물용품', 7: '식물', 
+                        8: '삽니다', 9: '생활가전', 10: '유아동', 11: '유아도서', 12: '여성잡화', 
+                        13: '남성패션/잡화', 14:'뷰티/미용', 15: '도서/티켓/음반', 16: '기타 중고물품'}
+        interest_list = []
+        for code, enabled in enumerate(user.interest):
+            if enabled=="1":
+                interest_list.append(code_category[code])
+        return {"category":interest_list}
+
+    def put(self, request):
+        user = request.user
+        serializer = UserCategorySerializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.update(user, serializer.validated_data)
+        data = self.get_list(user)
+        return Response(data, status=status.HTTP_200_OK)
+    
+    def get(self, request):
+        user = request.user
+        data = self.get_list(user)
+        return Response(data, status=status.HTTP_200_OK)
+    
