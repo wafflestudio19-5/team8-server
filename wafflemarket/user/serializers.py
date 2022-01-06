@@ -12,7 +12,7 @@ from .models import User, Auth
 import re
 from django.utils import timezone
 import datetime
-# from location.serializers import LocationSerializer
+from location.serializers import LocationSerializer
 
 User = get_user_model()
 JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
@@ -147,7 +147,7 @@ class UserSerializer(serializers.ModelSerializer):
             'id',
             'phone_number',
             'username',
-            'profile_image',
+            #'profile_image',
             'email',
             'created_at',
             'last_login',
