@@ -25,13 +25,11 @@ class PostUserTestCase(TransactionTestCase):
 
         cls.user = UserFactory(
             phone_number='01011112222',
-            email='wafflemarket@test.com',
             username='steve'
         )
 
         cls.post_data = {
             'phone_number': '01022223333',
-            'email': 'waffle@test.com',
             'username': 'mark'
         }
     
@@ -95,8 +93,8 @@ class PostUserTestCase(TransactionTestCase):
         self.assertEqual(res_data['phone_number'], '01011112222')
         self.assertEqual(res_data['username'], 'steve')
         self.assertEqual(res_data['logined'], True)
-        # self.assertEqual(res_data['first_login'], True)
-        # self.assertEqual(res_data['location_exists'], False)
+        self.assertEqual(res_data['first_login'], True)
+        self.assertEqual(res_data['location_exists'], False)
         self.assertIn('token', res_data)
 
         user_count = User.objects.count()
@@ -112,14 +110,20 @@ class PostUserTestCase(TransactionTestCase):
         self.assertEqual(res_data['phone_number'], '01022223333')
         self.assertEqual(res_data['username'], 'mark')
         self.assertEqual(res_data['logined'], True)
-        # self.assertEqual(res_data['first_login'], True)
-        # self.assertEqual(res_data['location_exists'], False)
+        self.assertEqual(res_data['first_login'], True)
+        self.assertEqual(res_data['location_exists'], False)
         self.assertIn('token', res_data)
 
         user_count = User.objects.count()
         self.assertEqual(user_count, 2)
+        user = User.objects.get(phone_number='01022223333')
+        self.assertEqual(user.username, 'mark')
+        self.assertIsNone(user.location)
+        self.assertIsNotNone(user.created_at)
+        self.assertIsNotNone(user.last_login)
+        self.assertTrue(user.is_active)
         
-        
+
 class PutUserCategoryTestCase(TestCase):
     @classmethod
     def setUp(cls):
