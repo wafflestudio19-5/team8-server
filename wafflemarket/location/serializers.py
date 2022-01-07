@@ -7,22 +7,6 @@ from user.models import User
 # response serializer for [GET]location
 class LocationSerializer(serializers.ModelSerializer):
 
-    neighborhoods = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Location
-        fields = (
-            'place_name',
-            'code',
-            'neighborhoods'
-        )
-
-    def get_neighborhoods(self, location):
-        return NeighborhoodSerializer(location.neighborhoods, many=True, context=self.context).data
-
-# location serializer simple ver.
-class LocationSimpleSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Location
         fields = (
