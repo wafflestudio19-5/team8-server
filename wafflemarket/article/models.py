@@ -14,7 +14,6 @@ class Article(models.Model):
     price = models.PositiveBigIntegerField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     sold_at = models.DateTimeField(null=True, default=None)
-    #deleted_at = models.DateTimeField(null=True, default=None)
     
     def update(self, title=None, content=None, product_image=None, category=None, price=None):
         if title is not None: self.title = title
@@ -30,3 +29,7 @@ class Comment(models.Model):
     content = models.CharField(max_length=120, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     deleted_at = models.DateTimeField(null=True, default=None)
+
+class ProductImage(models.Model):
+    article = models.ForeignKey(Article, related_name='product_images', null=False, on_delete=models.CASCADE)
+    product_image = models.ImageField(upload_to=upload_product_image)
