@@ -57,7 +57,7 @@ class UserCreateSerializer(serializers.Serializer):
     phone_number = serializers.CharField(required=False)
     email = serializers.EmailField(required=False)
     username = serializers.CharField(required=True)
-    # profile_image = serializers.ImageField(required=False)
+    profile_image = serializers.ImageField(required=False)
     password = serializers.CharField(required=False)
     is_superuser = serializers.BooleanField(required=False, default=False)
     is_staff = serializers.BooleanField(required=False, default=False)
@@ -139,6 +139,7 @@ class UserLoginSerializer(serializers.Serializer):
             return True
         
 class UserSerializer(serializers.ModelSerializer):
+    profile_image = serializers.SerializerMethodField(read_only=True)
     location = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -147,7 +148,7 @@ class UserSerializer(serializers.ModelSerializer):
             'id',
             'phone_number',
             'username',
-            #'profile_image',
+            'profile_image',
             'email',
             'created_at',
             'last_login',
@@ -157,18 +158,26 @@ class UserSerializer(serializers.ModelSerializer):
             'location'
         )
 
+    def get_profile_image(self, user): 
+        url = user.profile_image.url
+        return url[:url.find('?')]
     def get_location(self, user):
-        #return LocationSerializer(user.location, context=self.context).data
-        return "미완"
+        return LocationSerializer(user.location, context=self.context).data
     
 class UserSimpleSerializer(serializers.ModelSerializer):
+    profile_image = serializers.SerializerMethodField(read_only=True)
+    
     class Meta:
         model = User
         fields = (
             'id',
             'username',
-            #'profile_image'
+            'profile_image'
         )
+
+    def get_profile_image(self, user):
+        url = user.profile_image.url
+        return url[:url.find('?')]
 
 
 class UserUpdateSerializer(serializers.Serializer):
@@ -176,10 +185,10 @@ class UserUpdateSerializer(serializers.Serializer):
     profile_image = serializers.ImageField(required=False)
     
     def validate(self, data):
-        u = re.compile((r'^[가-힣a-zA-Z0-9]+$'))
+        u = re.compile((r'^[^&=_\'-+,<>]+$'))
         username = data.get('username')
         if username is not None and u.match(username) is None:
-            raise serializers.ValidationError("닉네임은 띄어쓰기 없이 영문 한글 숫자만 가능해요.")
+            raise serializers.ValidationError("올바른 닉네임을 입력해주세요.")
         
         return data
     

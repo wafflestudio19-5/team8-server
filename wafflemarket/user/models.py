@@ -10,6 +10,7 @@ import hmac
 import base64
 import datetime 
 from location.models import Location
+from .services import upload_profile_image
 
 
 class CustomUserManager(BaseUserManager):
@@ -88,7 +89,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone_number = models.CharField(max_length=255, null=True, unique=True)
     username = models.CharField(max_length=255)
     email = models.EmailField(max_length=255, null=True, unique=True)
-    # profile_image = models.ImageField(blank=True, upload_to="photo/%Y/%m/%d")
+    profile_image = models.ImageField(blank=True, upload_to=upload_profile_image)
     location = models.ForeignKey(Location, related_name='users', null=True, on_delete=models.SET_NULL)
     
     interest = models.CharField(max_length=255, default = "1"*17)
