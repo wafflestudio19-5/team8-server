@@ -1,4 +1,5 @@
 from abc import ABC
+from typing_extensions import Required
 from rest_framework import serializers
 from .models import Article
 from user.serializers import UserSimpleSerializer
@@ -8,7 +9,7 @@ from location.serializers import LocationSerializer
 class ArticleCreateSerializer(serializers.Serializer):
     title = serializers.CharField(required=True)
     content = serializers.CharField(required=True)
-    product_image = serializers.ImageField(required=False)
+    image_count = serializers.CharField(required=True)
     category = serializers.CharField(required=True)
     price = serializers.IntegerField(required=False)
 
@@ -16,6 +17,7 @@ class ArticleCreateSerializer(serializers.Serializer):
         price = data.get('price')
         title = data.get('title')
         content = data.get('content')
+        image_count = data.get('image_count')
         category = data.get('category')
         category_list = ['디지털기기', '가구/인테리어', '생활/가공식품', '스포츠/레저', '여성의류', '게임/취미', '반려동물용품', '식물',
                          '삽니다', '생활가전', '유아동', '유아도서', '여성잡화', '남성패션/잡화', '뷰티/미용', '도서/티켓/음반', '기타 중고물품']
@@ -24,6 +26,12 @@ class ArticleCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError("가격은 0 이상의 정수로 입력되어야 해요.")
         if category and category not in category_list:
             raise serializers.ValidationError("카테고리가 부적절해요.")
+        try:
+            count = int(image_count)
+            if count <= 0:
+                raise serializers.ValidationError("사진 개수는 자연수여야 해요.")
+        except:
+            raise serializers.ValidationError("사진 개수는 자연수여야 해요.")
         return data
     
     def create_article(self, validated_data, user):
