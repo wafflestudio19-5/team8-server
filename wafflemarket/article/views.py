@@ -3,6 +3,7 @@ from rest_framework.serializers import Serializer
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.core.paginator import Paginator
 from .serializers import ArticleCreateSerializer, ArticlePaginationValidator, ArticleSerializer
 from .models import Article
 
@@ -42,11 +43,14 @@ class ArticleViewSet(viewsets.GenericViewSet):
         return Response({"success":True}, status=status.HTTP_200_OK)
     
     def list(self, request):
-        page_id = request.body.get('page')
+        page_id = request.GET.get('page', None)
         serializer = ArticlePaginationValidator(data={'page_id': page_id})
         serializer.is_valid(raise_exception=True)
-        articles = serializer.data.get('articles')
-        return Response(self.get_serializer(articles, many=True).data, status=status.HTTP_200_OK)
+
+        page_id = serializer.data.get('page_id')
+        articles = Article.objects.all().order_by('-created_at')
+        pages = Paginator(articles, 15)
+        return Response(self.get_serializer(pages.page(page_id), many=True).data, status=status.HTTP_200_OK)
     
     def retrieve(self, request, pk=None):
         if Article.objects.filter(id=pk).exists():
