@@ -134,3 +134,6 @@ dmypy.json
 
 # Web static file
 static/
+
+# social login test file
+logintest.html

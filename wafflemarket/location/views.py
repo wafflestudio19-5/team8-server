@@ -1,4 +1,4 @@
-from rest_framework import status, permissions
+from rest_framework import serializers, status, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
@@ -27,7 +27,9 @@ class NeighborhoodView(APIView):
     permission_classes = (permissions.IsAuthenticated, )
 
     @swagger_auto_schema(responses={200: NeighborhoodSerializer(many=True)})
-    # returns current user's neighborhood
-    def get(self, request):
-        user = request.user
-        return Response(NeighborhoodSerializer(user.location.neighborhoods, many=True).data, status=status.HTTP_200_OK)
+    # returns neighborhood of given location
+    def get(self, request, location_code):
+        serializer = UserLocationValidator(data={'location_code': location_code})
+        serializer.is_valid(raise_exception=True)
+        location = Location.objects.get(code=serializer.data.get('location_code'))
+        return Response(NeighborhoodSerializer(location.neighborhoods, many=True).data, status=status.HTTP_200_OK)
