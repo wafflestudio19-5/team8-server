@@ -159,8 +159,11 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
     def get_profile_image(self, user): 
-        url = user.profile_image.url
-        return url[:url.find('?')]
+        if user.profile_image:
+            url = user.profile_image.url
+            return url[:url.find('?')]
+        else:
+            return None
     def get_location(self, user):
         return LocationSerializer(user.location, context=self.context).data
     
@@ -176,8 +179,11 @@ class UserSimpleSerializer(serializers.ModelSerializer):
         )
 
     def get_profile_image(self, user):
-        url = user.profile_image.url
-        return url[:url.find('?')]
+        if user.profile_image:
+            url = user.profile_image.url
+            return url[:url.find('?')]
+        else:
+            return None
 
 
 class UserUpdateSerializer(serializers.Serializer):

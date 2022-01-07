@@ -25,8 +25,8 @@ class Article(models.Model):
 
 class Comment(models.Model):
     commenter = models.ForeignKey(User, related_name='comments', null=True, on_delete=models.SET_NULL)
-    article = models.ForeignKey(Article, related_name='articles', on_delete=models.CASCADE)
-    parent = models.ForeignKey('self', null=True, on_delete=models.SET_NULL)
-    content = models.CharField(max_length=120)
+    article = models.ForeignKey(Article, related_name='comments', on_delete=models.CASCADE)
+    parent = models.ForeignKey('self', related_name='replies', null=True, on_delete=models.SET_NULL)
+    content = models.CharField(max_length=120, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     deleted_at = models.DateTimeField(null=True, default=None)

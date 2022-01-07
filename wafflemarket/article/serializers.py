@@ -1,6 +1,6 @@
 from abc import ABC
 from rest_framework import serializers
-from .models import Article
+from .models import Article, Comment
 from user.serializers import UserSimpleSerializer
 from location.serializers import LocationSerializer
 
@@ -44,6 +44,7 @@ class ArticleSerializer(serializers.ModelSerializer):
     location = serializers.SerializerMethodField(read_only=True)
     product_image = serializers.SerializerMethodField(read_only=True)
     buyer = serializers.SerializerMethodField(read_only=True)
+    comments = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Article
@@ -59,7 +60,7 @@ class ArticleSerializer(serializers.ModelSerializer):
             'created_at',
             'sold_at', #None이면 거래중
             'buyer', #None이면 거래중
-            'deleted_at'
+            'comments'
         )
     
     def get_seller(self, article):
@@ -67,11 +68,37 @@ class ArticleSerializer(serializers.ModelSerializer):
     def get_location(self, article):
         return LocationSerializer(article.location, context=self.context).data
     def get_product_image(self, article):
-        url = article.product_image.url
-        return url[:url.find('?')]
+        if article.product_image:
+            url = article.product_image.url
+            return url[:url.find('?')]
+        else:
+            return None
     def get_buyer(self, article):
         if article.buyer is None:
             return "거래중"
         else:
             return UserSimpleSerializer(article.buyer, context=self.context).data
+    def get_comments(self, article):
+        comments = Comment.objects.filter(article=article, parent=None).order_by('created_at')
+        return CommentSerializer(comments, context=self.context, many=True).data
     
+class CommentSerializer(serializers.ModelSerializer):
+    commenter = serializers.SerializerMethodField(read_only=True)
+    replies = serializers.SerializerMethodField(read_only=True)
+    
+    class Meta:
+        model = Comment
+        fields = (
+            'id',
+            'commenter',
+            'content',
+            'created_at',
+            'deleted_at',
+            'replies'
+        )
+        
+    def get_commenter(self, comment):
+        return UserSimpleSerializer(comment.commenter, context=self.context).data
+    def get_replies(self, comment):
+        replies = Comment.objects.filter(parent=comment).order_by('created_at')
+        return CommentSerializer(replies, context=self.context, many=True).data
