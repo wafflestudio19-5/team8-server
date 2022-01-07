@@ -81,7 +81,15 @@ class ArticleSerializer(serializers.ModelSerializer):
     def get_comments(self, article):
         comments = Comment.objects.filter(article=article, parent=None).order_by('created_at')
         return CommentSerializer(comments, context=self.context, many=True).data
-    
+
+class CommentCreateSerializer(serializers.Serializer):
+    content = serializers.CharField(required=True)
+    def validate(self, data):
+        return data
+    def create(self, validated_data, commenter, article, parent=None):
+        comment = Comment.objects.create(commenter=commenter, article=article, parent=parent, **validated_data)
+        comment.save()
+        
 class CommentSerializer(serializers.ModelSerializer):
     commenter = serializers.SerializerMethodField(read_only=True)
     replies = serializers.SerializerMethodField(read_only=True)

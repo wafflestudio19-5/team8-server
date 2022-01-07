@@ -2,7 +2,7 @@ from rest_framework import status, viewsets, permissions
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .serializers import ArticleCreateSerializer, ArticleSerializer
+from .serializers import ArticleCreateSerializer, ArticleSerializer, CommentCreateSerializer
 from .models import Article, Comment
 from django.utils import timezone
 
@@ -58,12 +58,11 @@ class ArticleViewSet(viewsets.GenericViewSet):
             article = Article.objects.get(id=pk)
         else:
             return Response({"해당하는 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
-
-        content = request.data.get('content')
-        comment = Comment.objects.create(commenter=request.user, article=article, content=content, parent=None)
-        comment.save()
-        return Response(self.get_serializer(article).data, status=status.HTTP_200_OK)
-
+        
+        serializer = CommentCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.create(serializer.validated_data, request.user, article)
+        return Response(self.get_serializer(article).data, status=status.HTTP_201_CREATED)
 
 class CommentView(APIView):
     permission_classes = (permissions.IsAuthenticated, )
@@ -94,9 +93,9 @@ class CommentView(APIView):
         else:
             return Response({"해당하는 댓글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
         
-        content = request.data.get('content')
-        comment = Comment.objects.create(commenter=request.user, article=article, content=content, parent=comment)
-        comment.save()
-        return Response(ArticleSerializer(article).data, status=status.HTTP_200_OK)
+        serializer = CommentCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.create(serializer.validated_data, request.user, article, comment)
+        return Response(ArticleSerializer(article).data, status=status.HTTP_201_CREATED)
         
 
