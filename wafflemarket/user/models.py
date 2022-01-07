@@ -83,7 +83,7 @@ class Auth(models.Model):
 
 class User(AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
-    USERNAME_FIELD = 'phone_number'
+    USERNAME_FIELD = 'id'
     REQUIRED_FIELDS = []
     
     phone_number = models.CharField(max_length=255, null=True, unique=True)

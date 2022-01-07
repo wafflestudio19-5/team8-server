@@ -26,10 +26,10 @@ class LocationView(APIView):
 class NeighborhoodView(APIView):
     permission_classes = (permissions.IsAuthenticated, )
 
-    @swagger_auto_schema(request_body=UserLocationValidator, responses={200: NeighborhoodSerializer(many=True)})
+    @swagger_auto_schema(responses={200: NeighborhoodSerializer(many=True)})
     # returns neighborhood of given location
-    def get(self, request):
-        serializer = UserLocationValidator(data=request.data)
+    def get(self, request, location_code):
+        serializer = UserLocationValidator(data={'location_code': location_code})
         serializer.is_valid(raise_exception=True)
         location = Location.objects.get(code=serializer.data.get('location_code'))
         return Response(NeighborhoodSerializer(location.neighborhoods, many=True).data, status=status.HTTP_200_OK)
