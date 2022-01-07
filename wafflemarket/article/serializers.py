@@ -2,7 +2,8 @@ from abc import ABC
 from rest_framework import serializers
 from django.core.paginator import Paginator
 
-from .models import Article, ProductImage, Comment
+from .models import Article, Comment, ProductImage
+from django.core.paginator import Paginator
 from user.serializers import UserSimpleSerializer
 from location.serializers import LocationSimpleSerializer
 
