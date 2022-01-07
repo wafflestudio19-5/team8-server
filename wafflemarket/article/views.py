@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
 from django.core.paginator import Paginator
-from .serializers import ArticleCreateSerializer, ArticlePaginationValidator, ArticleSerializer, CommentCreateSerializer
+from .serializers import ArticleCreateSerializer, ArticlePaginationValidator, ArticleSerializer, CommentCreateSerializer, CommentSerializer
 from .models import Article, ProductImage, Comment
 
 class ArticleViewSet(viewsets.GenericViewSet): 
@@ -100,17 +100,24 @@ class ArticleViewSet(viewsets.GenericViewSet):
             return Response({"해당하는 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
         return Response(self.get_serializer(article).data, status=status.HTTP_200_OK)
     
-    @action(detail=True, methods=['POST'])
+    @action(detail=True, methods=['POST', 'GET'])
     def comment(self, request, pk):
         if Article.objects.filter(id=pk).exists():
             article = Article.objects.get(id=pk)
         else:
             return Response({"해당하는 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
         
-        serializer = CommentCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.create(serializer.validated_data, request.user, article)
-        return Response(self.get_serializer(article).data, status=status.HTTP_201_CREATED)
+        if self.request.method == 'POST':
+            serializer = CommentCreateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.create(serializer.validated_data, request.user, article)
+            comments = Comment.objects.filter(article=article)
+            return Response(CommentSerializer(comments, many=True, context = {'user' : request.user}).data, status=status.HTTP_201_CREATED)
+        
+        elif self.request.method == 'GET':
+            comments = Comment.objects.filter(article=article)
+            return Response(CommentSerializer(comments, many=True, context = {'user' : request.user}).data, status=status.HTTP_200_OK)
+    
 
 class CommentView(APIView):
     permission_classes = (permissions.IsAuthenticated, )
@@ -129,7 +136,8 @@ class CommentView(APIView):
         
         comment.deleted_at = timezone.now()
         comment.save()
-        return Response(ArticleSerializer(article).data, status=status.HTTP_200_OK)
+        comments = Comment.objects.filter(article=article)
+        return Response(CommentSerializer(comments, many=True, context = {'user' : request.user}).data, status=status.HTTP_200_OK)
     
     def post(self, request, a_id, c_id):
         if Article.objects.filter(id=a_id).exists():
@@ -144,6 +152,7 @@ class CommentView(APIView):
         serializer = CommentCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.create(serializer.validated_data, request.user, article, comment)
-        return Response(ArticleSerializer(article).data, status=status.HTTP_201_CREATED)
+        comments = Comment.objects.filter(article=article)
+        return Response(CommentSerializer(comments, many=True, context = {'user' : request.user}).data, status=status.HTTP_200_OK)
         
 
