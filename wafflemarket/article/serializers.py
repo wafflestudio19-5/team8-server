@@ -2,7 +2,8 @@ from abc import ABC
 from rest_framework import serializers
 from django.core.paginator import Paginator
 
-from .models import Article, ProductImage
+from .models import Article, Comment, ProductImage
+from django.core.paginator import Paginator
 from user.serializers import UserSimpleSerializer
 from location.serializers import LocationSimpleSerializer
 
@@ -69,7 +70,6 @@ class ArticleSerializer(serializers.ModelSerializer):
             'created_at',
             'sold_at', #None이면 거래중
             'buyer', #None이면 거래중
-            'deleted_at',
         )
     
     def get_seller(self, article):
@@ -83,6 +83,40 @@ class ArticleSerializer(serializers.ModelSerializer):
             return None
         else:
             return UserSimpleSerializer(article.buyer, context=self.context).data
+
+class CommentCreateSerializer(serializers.Serializer):
+    content = serializers.CharField(required=True)
+    def validate(self, data):
+        return data
+    def create(self, validated_data, commenter, article, parent=None):
+        comment = Comment.objects.create(commenter=commenter, article=article, parent=parent, **validated_data)
+        comment.save()
+        
+class CommentSerializer(serializers.ModelSerializer):
+    commenter = serializers.SerializerMethodField(read_only=True)
+    replies = serializers.SerializerMethodField(read_only=True)
+    delete_enable = serializers.SerializerMethodField(read_only=True)
+    
+    class Meta:
+        model = Comment
+        fields = (
+            'id',
+            'commenter',
+            'delete_enable',
+            'content',
+            'created_at',
+            'deleted_at',
+            'replies'
+        )
+        
+    def get_commenter(self, comment):
+        return UserSimpleSerializer(comment.commenter, context=self.context).data
+    def get_delete_enable(self, comment):
+        user =  self.context['user']
+        return comment.commenter == user
+    def get_replies(self, comment):
+        replies = Comment.objects.filter(parent=comment).order_by('created_at')
+        return CommentSerializer(replies, context=self.context, many=True).data
 
 
 class ProductImageSerializer(serializers.ModelSerializer):

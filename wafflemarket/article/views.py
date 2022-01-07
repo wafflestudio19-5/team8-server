@@ -4,9 +4,10 @@ from rest_framework.serializers import Serializer
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.utils import timezone
 from django.core.paginator import Paginator
-from .serializers import ArticleCreateSerializer, ArticlePaginationValidator, ArticleSerializer
-from .models import Article, ProductImage
+from .serializers import ArticleCreateSerializer, ArticlePaginationValidator, ArticleSerializer, CommentCreateSerializer, CommentSerializer
+from .models import Article, ProductImage, Comment
 
 class ArticleViewSet(viewsets.GenericViewSet): 
     permission_classes = (permissions.IsAuthenticated, )
@@ -99,4 +100,59 @@ class ArticleViewSet(viewsets.GenericViewSet):
             return Response({"해당하는 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
         return Response(self.get_serializer(article).data, status=status.HTTP_200_OK)
     
+    @action(detail=True, methods=['POST', 'GET'])
+    def comment(self, request, pk):
+        if Article.objects.filter(id=pk).exists():
+            article = Article.objects.get(id=pk)
+        else:
+            return Response({"해당하는 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+        
+        if self.request.method == 'POST':
+            serializer = CommentCreateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.create(serializer.validated_data, request.user, article)
+            comments = Comment.objects.filter(article=article)
+            return Response(CommentSerializer(comments, many=True, context = {'user' : request.user}).data, status=status.HTTP_201_CREATED)
+        
+        elif self.request.method == 'GET':
+            comments = Comment.objects.filter(article=article)
+            return Response(CommentSerializer(comments, many=True, context = {'user' : request.user}).data, status=status.HTTP_200_OK)
     
+
+class CommentView(APIView):
+    permission_classes = (permissions.IsAuthenticated, )
+    
+    def delete(self, request, a_id, c_id):
+        if Article.objects.filter(id=a_id).exists():
+            article = Article.objects.get(id=a_id)
+        else:
+            return Response({"해당하는 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+        if Comment.objects.filter(id=c_id, article=article).exists():
+            comment = Comment.objects.get(id=c_id, article=article)
+        else:
+            return Response({"해당하는 댓글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+        if comment.commenter!=request.user:
+            return Response({"작성자 외에는 댓글을 삭제할 수 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+        
+        comment.deleted_at = timezone.now()
+        comment.save()
+        comments = Comment.objects.filter(article=article)
+        return Response(CommentSerializer(comments, many=True, context = {'user' : request.user}).data, status=status.HTTP_200_OK)
+    
+    def post(self, request, a_id, c_id):
+        if Article.objects.filter(id=a_id).exists():
+            article = Article.objects.get(id=a_id)
+        else:
+            return Response({"해당하는 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+        if Comment.objects.filter(id=c_id, article=article).exists():
+            comment = Comment.objects.get(id=c_id, article=article)
+        else:
+            return Response({"해당하는 댓글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = CommentCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.create(serializer.validated_data, request.user, article, comment)
+        comments = Comment.objects.filter(article=article)
+        return Response(CommentSerializer(comments, many=True, context = {'user' : request.user}).data, status=status.HTTP_200_OK)
+        
+
