@@ -44,12 +44,15 @@ class ArticleViewSet(viewsets.GenericViewSet):
     
     def list(self, request):
         page_id = request.GET.get('page', None)
+        articles = Article.objects.all().order_by('-created_at')
+        pages = Paginator(articles, 15)
+
+        if page_id is None:
+            return Response(self.get_serializer(articles, many=True).data, status=status.HTTP_200_OK)
         serializer = ArticlePaginationValidator(data={'page_id': page_id})
         serializer.is_valid(raise_exception=True)
 
         page_id = serializer.data.get('page_id')
-        articles = Article.objects.all().order_by('-created_at')
-        pages = Paginator(articles, 15)
         return Response(self.get_serializer(pages.page(page_id), many=True).data, status=status.HTTP_200_OK)
     
     def retrieve(self, request, pk=None):
