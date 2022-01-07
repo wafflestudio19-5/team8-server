@@ -56,6 +56,8 @@ class UserLocationSerializer(serializers.ModelSerializer):
         )
 
     def get_location(self, user):
+        if user.location is None:
+            return None
         return user.location.place_name
 
 # request validator for [POST]location

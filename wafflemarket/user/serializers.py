@@ -186,6 +186,8 @@ class UserSerializer(serializers.ModelSerializer):
             return url
         return url[:url.find('?')]
     def get_location(self, user):
+        if user.location is None:
+            return None
         return LocationSerializer(user.location, context=self.context).data
     
 class UserSimpleSerializer(serializers.ModelSerializer):
