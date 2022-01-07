@@ -1,5 +1,4 @@
 from abc import ABC
-from typing_extensions import Required
 from rest_framework import serializers
 from django.core.paginator import Paginator
 
@@ -37,6 +36,7 @@ class ArticleCreateSerializer(serializers.Serializer):
         return data
     
     def create_article(self, validated_data, user):
+        validated_data.pop('image_count')
         seller = user
         location = user.location
         article = Article.objects.create(seller=seller, location=location, **validated_data)
@@ -69,7 +69,7 @@ class ArticleSerializer(serializers.ModelSerializer):
             'created_at',
             'sold_at', #None이면 거래중
             'buyer', #None이면 거래중
-            'deleted_at'
+            'deleted_at',
         )
     
     def get_seller(self, article):
@@ -77,7 +77,7 @@ class ArticleSerializer(serializers.ModelSerializer):
     def get_location(self, article):
         return LocationSimpleSerializer(article.location, context=self.context).data
     def get_product_images(self, article):
-        return ProductImageSerializer(article.product_images, many=True, context=self.context)
+        return ProductImageSerializer(article.product_images, many=True, context=self.context).data
     def get_buyer(self, article):
         if article.buyer is None:
             return "거래중"
@@ -91,7 +91,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage
         fields = (
-            'url'
+            'url',
         )
 
     def get_url(self, object):
