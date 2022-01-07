@@ -3,19 +3,31 @@ from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, Permis
 import requests
 from random import randint
 from django.utils import timezone
+import os
 import time
 import hashlib
 import hmac
 import base64
 import datetime 
 from location.models import Location
+from .services import upload_profile_image
+
 
 class CustomUserManager(BaseUserManager):
     use_in_migrations = True
     
-    def create_user(self, phone_number, **extra_fields):
+    def create_user(self, **extra_fields):
+        extra_fields.setdefault('is_staff', False)
         extra_fields.setdefault('is_superuser', False)
-        user = self.model(phone_number=phone_number, **extra_fields)
+        user = self.model(**extra_fields)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, password, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        user = self.model(**extra_fields)
+        user.set_password(password)
         user.save(using=self._db)
         return user
     
@@ -41,8 +53,8 @@ class Auth(models.Model):
         url = 'https://sens.apigw.ntruss.com/sms/v2/services/ncp:sms:kr:260182270275:wafflemarket/messages'
         timestamp = str(int(time.time() * 1000))
         uri = '/sms/v2/services/ncp:sms:kr:260182270275:wafflemarket/messages'
-        access_key = "Ih1hTs3EV9rU2KxKUdiG"
-        secret_key =  "R7CAqhYuxYbfOFTg8RFxhGcoq9SlczRiOAEOivR4"
+        access_key = "M1m2A6EjuLtlG6uiRYpt"
+        secret_key =  os.getenv("SMS_SECRET_KEY")
         
         data = {
         "type":"SMS",
@@ -71,13 +83,13 @@ class Auth(models.Model):
 
 class User(AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
-    USERNAME_FIELD = 'phone_number'
+    USERNAME_FIELD = 'id'
     REQUIRED_FIELDS = []
     
     phone_number = models.CharField(max_length=255, null=True, unique=True)
     username = models.CharField(max_length=255)
     email = models.EmailField(max_length=255, null=True, unique=True)
-    # profile_image = models.ImageField(blank=True, upload_to="photo/%Y/%m/%d")
+    profile_image = models.ImageField(blank=True, upload_to=upload_profile_image)
     location = models.ForeignKey(Location, related_name='users', null=True, on_delete=models.SET_NULL)
     
     interest = models.CharField(max_length=255, default = "1"*17)
@@ -86,6 +98,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_login = models.DateTimeField(null=True)
     username_changed_at = models.DateTimeField(null=True)
     is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(null=True, default=False)
     
     def __str__(self):
         return self.username

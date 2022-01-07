@@ -2,6 +2,8 @@ from abc import ABC
 from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import update_last_login
+from django.core.exceptions import ValidationError
+from django.core.files import File
 from rest_framework import serializers
 from rest_framework.fields import NullBooleanField
 from rest_framework.status import HTTP_400_BAD_REQUEST
@@ -12,6 +14,8 @@ from article.models import Article
 import re
 from django.utils import timezone
 import datetime
+import os
+import urllib.request
 from location.serializers import LocationSerializer
 
 User = get_user_model()
@@ -54,57 +58,91 @@ class UserAuthSerializer(serializers.Serializer):
             return False
 
 class UserCreateSerializer(serializers.Serializer):
-    phone_number = serializers.CharField(required=True)
+    phone_number = serializers.CharField(required=False)
+    email = serializers.EmailField(required=False)
     username = serializers.CharField(required=True)
-    profile_image = serializers.ImageField(required=False)
+    profile_image = serializers.ImageField(allow_empty_file=True, required=False)
+    password = serializers.CharField(required=False)
+    is_superuser = serializers.BooleanField(required=False, default=False)
+    is_staff = serializers.BooleanField(required=False, default=False)
 
     def validate(self, data):
-        p = re.compile(r'^\d{2,3}\d{3,4}\d{4}$')
         phone_number = data.get('phone_number')
-        if phone_number is None:
-            raise serializers.ValidationError("전화번호가 입력되지 않았어요.")
-        elif p.search(phone_number) is None:
+        email = data.get('email')
+        if phone_number is None and email is None:
+            raise serializers.ValidationError("전화번호와 이메일 중 하나는 필수로 입력되어야 합니다.")
+
+        p = re.compile(r'^\d{2,3}\d{3,4}\d{4}$')
+        if phone_number is not None and p.match(phone_number) is None:
             raise serializers.ValidationError("전화번호가 올바르지 않아요.")      
         
-        u = re.compile((r'^[가-힣a-zA-Z0-9]+$'))
+        u = re.compile((r'^[^&=_\'-+,<>]+$'))
         username = data.get('username')
         if username is not None and u.match(username) is None:
-            raise serializers.ValidationError("닉네임은 띄어쓰기 없이 영문 한글 숫자만 가능해요.")
+            raise serializers.ValidationError("올바른 닉네임을 입력해주세요.")
         
         return data
 
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
+        is_staff = validated_data.get('is_staff')
+        is_superuser = validated_data.get('is_superuser')
+        password = validated_data.get('password')
+        profile_image = validated_data.get('profile_image')
+
+        if is_staff == True and is_superuser == True and password:
+            user = User.objects.create_superuser(**validated_data)
+        else:
+            user = User.objects.create_user(**validated_data)
+        
+        # profile image is necessary
+        if not profile_image:
+            try:
+                defalut_image_url = 'https://'+os.getenv('AWS_S3_BUCKET')+\
+                                '.s3.ap-northeast-2.amazonaws.com/default_image/user_profile.jpeg'
+                result = urllib.request.urlretrieve(defalut_image_url)
+                image_file = File(open(result[0], 'rb'))
+                image_file.content_type = 'image/jpeg'
+                user.profile_image.save(
+                    os.path.basename(defalut_image_url),
+                    image_file
+                )
+            except:
+                pass
         user.save()
         return user, jwt_token_of(user)
     
 
 class UserLoginSerializer(serializers.Serializer):
 
-    phone_number = serializers.CharField(max_length=64, required=True)
+    phone_number = serializers.CharField(max_length=64, required=False)
+    email = serializers.EmailField(max_length=255, required=False)
     token = serializers.CharField(max_length=255, read_only=True)
 
     def validate(self, data):
         phone_number = data.get('phone_number')
-        
-        if User.objects.filter(phone_number=phone_number, is_active=True):
-            user = User.objects.get(phone_number = phone_number, is_active=True)
-        else:
-            raise serializers.ValidationError("가입되지 않은 사용자입니다.")
+        email = data.get('email')
+        user = self.find_user(phone_number, email)
         
         update_last_login(None, user)
         return {
             'phone_number': user.phone_number,
+            'email': user.email,
             'username' : user.username,
             'token': jwt_token_of(user)
         }
+
+    def find_user(self, phone_number, email):
+        if phone_number and User.objects.filter(phone_number=phone_number, is_active=True):
+            return User.objects.get(phone_number = phone_number, is_active=True)
+        elif email and User.objects.filter(email=email, is_active=True):
+            return User.objects.get(email=email, is_active=True)
+        else:
+            raise serializers.ValidationError("존재하지 않는 사용자입니다.")
     
     def check_first_login(self, data):
         phone_number = data.get('phone_number')
-        if User.objects.filter(phone_number=phone_number, is_active=True):
-            user = User.objects.get(phone_number=phone_number, is_active=True)
-        else:
-            raise serializers.ValidationError("존재하지 않는 사용자입니다.")
+        email = data.get('email')
+        user = self.find_user(phone_number, email)
         
         if user.last_login is None:
             return True
@@ -113,10 +151,8 @@ class UserLoginSerializer(serializers.Serializer):
     
     def location_exists(self, data):
         phone_number = data.get('phone_number')
-        if User.objects.filter(phone_number=phone_number, is_active=True):
-            user = User.objects.get(phone_number=phone_number, is_active=True)
-        else:
-            raise serializers.ValidationError("존재하지 않는 사용자입니다.")
+        email = data.get('email')
+        user = self.find_user(phone_number, email)
         
         if user.location is None:
             return False
@@ -124,6 +160,7 @@ class UserLoginSerializer(serializers.Serializer):
             return True
         
 class UserSerializer(serializers.ModelSerializer):
+    profile_image = serializers.SerializerMethodField(read_only=True)
     location = serializers.SerializerMethodField(read_only=True)
     article_cnt = serializers.SerializerMethodField(read_only=True)
 
@@ -133,7 +170,7 @@ class UserSerializer(serializers.ModelSerializer):
             'id',
             'phone_number',
             'username',
-            #'profile_image',
+            'profile_image',
             'email',
             'created_at',
             'last_login',
@@ -144,15 +181,26 @@ class UserSerializer(serializers.ModelSerializer):
             'article_cnt'
         )
 
+    def get_profile_image(self, user): 
+        if not user.profile_image:
+            return None
+        url = user.profile_image.url
+        if url.find('?') == -1:
+            return url
+        return url[:url.find('?')]
     def get_location(self, user):
+        if user.location is None:
+            return None
         return LocationSerializer(user.location, context=self.context).data
     def get_article_cnt(self, user):
         article_cnt = Article.objects.filter(seller=user).count()
         return article_cnt
     
+    
 class UserSimpleSerializer(serializers.ModelSerializer):
     location = serializers.SerializerMethodField(read_only=True)
     article_cnt = serializers.SerializerMethodField(read_only=True)
+    profile_image = serializers.SerializerMethodField(read_only=True)
     
     class Meta:
         model = User
@@ -160,14 +208,23 @@ class UserSimpleSerializer(serializers.ModelSerializer):
             'id',
             'username',
             'location',
-            'article_cnt'
-            #'profile_image'
+            'article_cnt',
+            'profile_image',
         )
     def get_location(self, user):
+        if user.location is None:
+            return None
         return LocationSerializer(user.location, context=self.context).data
     def get_article_cnt(self, user):
         article_cnt = Article.objects.filter(seller=user).count()
         return article_cnt
+    def get_profile_image(self, user):
+        if not user.profile_image:
+            return None
+        url = user.profile_image.url
+        if url.find('?') == -1:
+            return url
+        return url[:url.find('?')]
 
 
 class UserUpdateSerializer(serializers.Serializer):
@@ -175,10 +232,10 @@ class UserUpdateSerializer(serializers.Serializer):
     profile_image = serializers.ImageField(required=False)
     
     def validate(self, data):
-        u = re.compile((r'^[가-힣a-zA-Z0-9]+$'))
+        u = re.compile((r'^[^&=_\'-+,<>]+$'))
         username = data.get('username')
         if username is not None and u.match(username) is None:
-            raise serializers.ValidationError("닉네임은 띄어쓰기 없이 영문 한글 숫자만 가능해요.")
+            raise serializers.ValidationError("올바른 닉네임을 입력해주세요.")
         
         return data
     

@@ -23,31 +23,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# Actual secret key is in secrets.json
-
-secret_file = os.path.join(BASE_DIR, 'wafflemarket/secrets.json') # secrets.json 파일 위치를 명시
-
-with open(secret_file) as f:
-    secrets = json.loads(f.read())
-
-
-def get_secret(setting, secrets=secrets):
-    """비밀 변수를 가져오거나 명시적 예외를 반환한다."""
-    try:
-        return secrets[setting]
-    except KeyError:
-        error_msg = "Set the {} environment variable".format(setting)
-        raise ImproperlyConfigured(error_msg)
-
-if get_secret("SECRET_KEY") == "":
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+if SECRET_KEY is None:
     SECRET_KEY = "f4>hy$pX[~4Y&1)>|>XC.z5#.:U2v&?&(44z^FC}d,B8{|hnXr"
-else:
-    SECRET_KEY = get_secret("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['ec2-54-180-144-124.ap-northeast-2.compute.amazonaws.com', '54.180.144.124', '127.0.0.1']
+ALLOWED_HOSTS = ['ec2-54-180-144-124.ap-northeast-2.compute.amazonaws.com', '54.180.144.124', '127.0.0.1', 'localhost']
 
 SITE_ID = 1
 
@@ -115,11 +98,10 @@ WSGI_APPLICATION = 'wafflemarket.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'HOST': 'localhost' if get_secret("DB_HOST") == "" else get_secret("DB_HOST"),
+        'HOST': 'localhost' if os.getenv("DB_HOST") is None else os.getenv("DB_HOST"),
         'PORT': 3306,
         'NAME': 'wafflemarket_backend',
         'USER': 'wafflemarket-backend',
@@ -211,3 +193,15 @@ SWAGGER_SETTINGS = {
         }
     },
 }
+
+# use s3 as default file storage
+
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+AWS_S3_SECURE_URLS = True
+
+AWS_S3_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_S3_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_S3_BUCKET')
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 105000000
+FILE_UPLOAD_MAX_MEMORY_SIZE = 105000000

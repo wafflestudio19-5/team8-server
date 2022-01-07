@@ -7,6 +7,6 @@ router = SimpleRouter()
 
 urlpatterns = [
     path('location/', LocationView.as_view(), name='location'),  # /api/v1/location/
-    path('location/neighborhood/', NeighborhoodView.as_view(), name='neighborhood'),  # /api/v1/location/neighborhood/
+    path('location/<str:location_code>/neighborhood/', NeighborhoodView.as_view(), name='neighborhood'),  # /api/v1/location/{location_code}/neighborhood/
     path('', include(router.urls))
 ]
