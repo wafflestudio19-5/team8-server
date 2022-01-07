@@ -20,6 +20,16 @@ class LocationSerializer(serializers.ModelSerializer):
     def get_neighborhoods(self, location):
         return NeighborhoodSerializer(location.neighborhoods, many=True, context=self.context).data
 
+# location serializer simple ver.
+class LocationSimpleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Location
+        fields = (
+            'place_name',
+            'code',
+        )
+
 # response serializer for [GET]location/neighborhood
 class NeighborhoodSerializer(serializers.ModelSerializer):
     

@@ -30,3 +30,7 @@ class Comment(models.Model):
     content = models.CharField(max_length=120, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     deleted_at = models.DateTimeField(null=True, default=None)
+
+class ProductImage(models.Model):
+    article = models.ForeignKey(Article, related_name='product_images', null=False, on_delete=models.CASCADE)
+    product_image = models.ImageField(upload_to=upload_product_image)
