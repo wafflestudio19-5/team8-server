@@ -10,6 +10,7 @@ from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework_jwt.settings import api_settings
 from django.http import HttpResponseBadRequest
 from .models import User, Auth
+from article.models import Article
 import re
 from django.utils import timezone
 import datetime
@@ -161,6 +162,7 @@ class UserLoginSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     profile_image = serializers.SerializerMethodField(read_only=True)
     location = serializers.SerializerMethodField(read_only=True)
+    article_cnt = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
@@ -175,7 +177,8 @@ class UserSerializer(serializers.ModelSerializer):
             'leaved_at',
             'username_changed_at',
             'is_active',
-            'location'
+            'location',
+            'article_cnt'
         )
 
     def get_profile_image(self, user): 
@@ -189,8 +192,14 @@ class UserSerializer(serializers.ModelSerializer):
         if user.location is None:
             return None
         return LocationSerializer(user.location, context=self.context).data
+    def get_article_cnt(self, user):
+        article_cnt = Article.objects.filter(seller=user).count()
+        return article_cnt
+    
     
 class UserSimpleSerializer(serializers.ModelSerializer):
+    location = serializers.SerializerMethodField(read_only=True)
+    article_cnt = serializers.SerializerMethodField(read_only=True)
     profile_image = serializers.SerializerMethodField(read_only=True)
     
     class Meta:
@@ -198,9 +207,17 @@ class UserSimpleSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'username',
-            'profile_image'
+            'location',
+            'article_cnt',
+            'profile_image',
         )
-
+    def get_location(self, user):
+        if user.location is None:
+            return None
+        return LocationSerializer(user.location, context=self.context).data
+    def get_article_cnt(self, user):
+        article_cnt = Article.objects.filter(seller=user).count()
+        return article_cnt
     def get_profile_image(self, user):
         if not user.profile_image:
             return None
@@ -234,7 +251,7 @@ class UserUpdateSerializer(serializers.Serializer):
     
     def update(self, user, validated_data):
         username = validated_data.get('username')
-        if username!=user.username:
+        if username!=user.username and username is not None:
             user.username = username
             user.username_changed_at = timezone.now()
             user.save()
