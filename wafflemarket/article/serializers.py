@@ -80,7 +80,7 @@ class ArticleSerializer(serializers.ModelSerializer):
         return ProductImageSerializer(article.product_images, many=True, context=self.context).data
     def get_buyer(self, article):
         if article.buyer is None:
-            return "거래중"
+            return None
         else:
             return UserSimpleSerializer(article.buyer, context=self.context).data
 
