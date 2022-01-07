@@ -1,8 +1,9 @@
 from rest_framework import status, viewsets, permissions
+from rest_framework.serializers import Serializer
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .serializers import ArticleCreateSerializer, ArticleSerializer
+from .serializers import ArticleCreateSerializer, ArticlePaginationValidator, ArticleSerializer
 from .models import Article
 
 class ArticleViewSet(viewsets.GenericViewSet): 
@@ -41,8 +42,11 @@ class ArticleViewSet(viewsets.GenericViewSet):
         return Response({"success":True}, status=status.HTTP_200_OK)
     
     def list(self, request):
-        article = Article.objects.all()
-        return Response(self.get_serializer(article, many=True).data, status=status.HTTP_200_OK)
+        page_id = request.body.get('page')
+        serializer = ArticlePaginationValidator(data={'page_id': page_id})
+        serializer.is_valid(raise_exception=True)
+        articles = serializer.data.get('articles')
+        return Response(self.get_serializer(articles, many=True).data, status=status.HTTP_200_OK)
     
     def retrieve(self, request, pk=None):
         if Article.objects.filter(id=pk).exists():

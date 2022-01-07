@@ -1,5 +1,7 @@
 from abc import ABC
 from rest_framework import serializers
+from django.core.paginator import Paginator
+
 from .models import Article
 from user.serializers import UserSimpleSerializer
 from location.serializers import LocationSerializer
@@ -70,4 +72,15 @@ class ArticleSerializer(serializers.ModelSerializer):
             return "거래중"
         else:
             return UserSimpleSerializer(article.buyer, context=self.context).data
-    
+
+
+class ArticlePaginationValidator(serializers.Serializer):
+    page_id = serializers.IntegerField(required=True)
+
+    def validate(self, data):
+        page_id = data.get('page_id')
+        articles = Article.objects.all().order_by('-created_at')
+        pages = Paginator(articles, 15)
+        if page_id <= 0 or page_id > pages.num_pages:
+            raise serializers.ValidationError("페이지 번호가 범위를 벗어났습니다.")
+        return { 'articles': pages.page(page_id) }
