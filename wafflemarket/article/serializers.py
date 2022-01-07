@@ -1,14 +1,16 @@
 from abc import ABC
 from rest_framework import serializers
+from django.core.paginator import Paginator
+
 from .models import Article
 from user.serializers import UserSimpleSerializer
-from location.serializers import LocationSerializer
+from location.serializers import LocationSimpleSerializer
 
 
 class ArticleCreateSerializer(serializers.Serializer):
     title = serializers.CharField(required=True)
     content = serializers.CharField(required=True)
-    product_image = serializers.ImageField(required=False)
+    product_image = serializers.ImageField(allow_empty_file=True, required=False)
     category = serializers.CharField(required=True)
     price = serializers.IntegerField(required=False)
 
@@ -65,13 +67,32 @@ class ArticleSerializer(serializers.ModelSerializer):
     def get_seller(self, article):
         return UserSimpleSerializer(article.seller, context=self.context).data
     def get_location(self, article):
-        return LocationSerializer(article.location, context=self.context).data
+        return LocationSimpleSerializer(article.location, context=self.context).data
     def get_product_image(self, article):
+        if not article.product_image:
+            return None
         url = article.product_image.url
+        if url.find('?') == -1:
+            return url
         return url[:url.find('?')]
     def get_buyer(self, article):
         if article.buyer is None:
             return "거래중"
         else:
             return UserSimpleSerializer(article.buyer, context=self.context).data
-    
+
+
+class ArticlePaginationValidator(serializers.Serializer):
+    page_id = serializers.IntegerField(required=True)
+    article_num = serializers.IntegerField(required=True)
+
+    def validate(self, data):
+        page_id = data.get('page_id')
+        article_num = data.get('article_num')
+        if article_num % 15:
+            num_pages = article_num/15 + 1
+        else:
+            num_pages = article_num/15
+        if page_id <= 0 or page_id > num_pages:
+            raise serializers.ValidationError("페이지 번호가 범위를 벗어났습니다.")
+        return data
