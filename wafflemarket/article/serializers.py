@@ -5,7 +5,7 @@ from django.core.paginator import Paginator
 from .models import Article, Comment, ProductImage
 from django.core.paginator import Paginator
 from user.serializers import UserSimpleSerializer
-from location.serializers import LocationSimpleSerializer
+from location.serializers import LocationSerializer
 
 
 class ArticleCreateSerializer(serializers.Serializer):
@@ -75,7 +75,7 @@ class ArticleSerializer(serializers.ModelSerializer):
     def get_seller(self, article):
         return UserSimpleSerializer(article.seller, context=self.context).data
     def get_location(self, article):
-        return LocationSimpleSerializer(article.location, context=self.context).data
+        return LocationSerializer(article.location, context=self.context).data
     def get_product_images(self, article):
         return ProductImageSerializer(article.product_images, many=True, context=self.context).data
     def get_buyer(self, article):
