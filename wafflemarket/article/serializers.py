@@ -1,9 +1,11 @@
 from abc import ABC
 from typing_extensions import Required
 from rest_framework import serializers
-from .models import Article
+from django.core.paginator import Paginator
+
+from .models import Article, ProductImage
 from user.serializers import UserSimpleSerializer
-from location.serializers import LocationSerializer
+from location.serializers import LocationSimpleSerializer
 
 
 class ArticleCreateSerializer(serializers.Serializer):
@@ -50,7 +52,7 @@ class ArticleCreateSerializer(serializers.Serializer):
 class ArticleSerializer(serializers.ModelSerializer):
     seller = serializers.SerializerMethodField(read_only=True)
     location = serializers.SerializerMethodField(read_only=True)
-    product_image = serializers.SerializerMethodField(read_only=True)
+    product_images = serializers.SerializerMethodField(read_only=True)
     buyer = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -61,7 +63,7 @@ class ArticleSerializer(serializers.ModelSerializer):
             'location',
             'title',
             'content',
-            'product_image',
+            'product_images',
             'category',
             'price',
             'created_at',
@@ -73,13 +75,43 @@ class ArticleSerializer(serializers.ModelSerializer):
     def get_seller(self, article):
         return UserSimpleSerializer(article.seller, context=self.context).data
     def get_location(self, article):
-        return LocationSerializer(article.location, context=self.context).data
-    def get_product_image(self, article):
-        url = article.product_image.url
-        return url[:url.find('?')]
+        return LocationSimpleSerializer(article.location, context=self.context).data
+    def get_product_images(self, article):
+        return ProductImageSerializer(article.product_images, many=True, context=self.context)
     def get_buyer(self, article):
         if article.buyer is None:
             return "거래중"
         else:
             return UserSimpleSerializer(article.buyer, context=self.context).data
-    
+
+
+class ProductImageSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = ProductImage
+        fields = (
+            'url'
+        )
+
+    def get_url(self, object):
+        url = object.product_image.url
+        if url.find('?') == -1:
+            return url
+        return url[:url.find('?')]
+
+
+class ArticlePaginationValidator(serializers.Serializer):
+    page_id = serializers.IntegerField(required=True)
+    article_num = serializers.IntegerField(required=True)
+
+    def validate(self, data):
+        page_id = data.get('page_id')
+        article_num = data.get('article_num')
+        if article_num % 15:
+            num_pages = article_num/15 + 1
+        else:
+            num_pages = article_num/15
+        if page_id <= 0 or page_id > num_pages:
+            raise serializers.ValidationError("페이지 번호가 범위를 벗어났습니다.")
+        return data

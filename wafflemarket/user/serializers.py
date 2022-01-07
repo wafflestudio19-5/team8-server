@@ -60,7 +60,7 @@ class UserCreateSerializer(serializers.Serializer):
     phone_number = serializers.CharField(required=False)
     email = serializers.EmailField(required=False)
     username = serializers.CharField(required=True)
-    profile_image = serializers.ImageField(required=False)
+    profile_image = serializers.ImageField(allow_empty_file=True, required=False)
     password = serializers.CharField(required=False)
     is_superuser = serializers.BooleanField(required=False, default=False)
     is_staff = serializers.BooleanField(required=False, default=False)
@@ -179,7 +179,11 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
     def get_profile_image(self, user): 
+        if not user.profile_image:
+            return None
         url = user.profile_image.url
+        if url.find('?') == -1:
+            return url
         return url[:url.find('?')]
     def get_location(self, user):
         return LocationSerializer(user.location, context=self.context).data
@@ -196,7 +200,11 @@ class UserSimpleSerializer(serializers.ModelSerializer):
         )
 
     def get_profile_image(self, user):
+        if not user.profile_image:
+            return None
         url = user.profile_image.url
+        if url.find('?') == -1:
+            return url
         return url[:url.find('?')]
 
 
