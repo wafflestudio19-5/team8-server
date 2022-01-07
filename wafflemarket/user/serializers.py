@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import update_last_login
 from django.core.exceptions import ValidationError
+from django.core.files import File
 from rest_framework import serializers
 from rest_framework.fields import NullBooleanField
 from rest_framework.status import HTTP_400_BAD_REQUEST
@@ -12,6 +13,8 @@ from .models import User, Auth
 import re
 from django.utils import timezone
 import datetime
+import os
+import urllib.request
 from location.serializers import LocationSerializer
 
 User = get_user_model()
@@ -83,10 +86,27 @@ class UserCreateSerializer(serializers.Serializer):
         is_staff = validated_data.get('is_staff')
         is_superuser = validated_data.get('is_superuser')
         password = validated_data.get('password')
+        profile_image = validated_data.get('profile_image')
+
         if is_staff == True and is_superuser == True and password:
             user = User.objects.create_superuser(**validated_data)
         else:
             user = User.objects.create_user(**validated_data)
+        
+        # profile image is necessary
+        if not profile_image:
+            try:
+                defalut_image_url = 'https://'+os.getenv('AWS_S3_BUCKET')+\
+                                '.s3.ap-northeast-2.amazonaws.com/default_image/user_profile.jpeg'
+                result = urllib.request.urlretrieve(defalut_image_url)
+                image_file = File(open(result[0], 'rb'))
+                image_file.content_type = 'image/jpeg'
+                user.profile_image.save(
+                    os.path.basename(defalut_image_url),
+                    image_file
+                )
+            except:
+                pass
         user.save()
         return user, jwt_token_of(user)
     
