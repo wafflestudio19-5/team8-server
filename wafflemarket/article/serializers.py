@@ -84,11 +84,11 @@ class ArticleSerializer(serializers.ModelSerializer):
 
 class ArticlePaginationValidator(serializers.Serializer):
     page_id = serializers.IntegerField(required=True)
-    articles = serializers.Field(required=False)
+    article_num = serializers.IntegerField(required=True)
 
     def validate(self, data):
         page_id = data.get('page_id')
-        article_num = Article.objects.count()
+        article_num = data.get('article_num')
         if article_num % 15:
             num_pages = article_num/15 + 1
         else:
