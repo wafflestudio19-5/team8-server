@@ -10,7 +10,7 @@ from location.serializers import LocationSerializer
 class ArticleCreateSerializer(serializers.Serializer):
     title = serializers.CharField(required=True)
     content = serializers.CharField(required=True)
-    # product_image = serializers.ImageField(required=False)
+    product_image = serializers.ImageField(required=False)
     category = serializers.CharField(required=True)
     price = serializers.IntegerField(required=False)
 
@@ -44,6 +44,7 @@ class ArticleCreateSerializer(serializers.Serializer):
 class ArticleSerializer(serializers.ModelSerializer):
     seller = serializers.SerializerMethodField(read_only=True)
     location = serializers.SerializerMethodField(read_only=True)
+    product_image = serializers.SerializerMethodField(read_only=True)
     buyer = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -54,7 +55,7 @@ class ArticleSerializer(serializers.ModelSerializer):
             'location',
             'title',
             'content',
-            #'product_image',
+            'product_image',
             'category',
             'price',
             'created_at',
@@ -67,6 +68,9 @@ class ArticleSerializer(serializers.ModelSerializer):
         return UserSimpleSerializer(article.seller, context=self.context).data
     def get_location(self, article):
         return LocationSerializer(article.location, context=self.context).data
+    def get_product_image(self, article):
+        url = article.product_image.url
+        return url[:url.find('?')]
     def get_buyer(self, article):
         if article.buyer is None:
             return "거래중"
