@@ -22,3 +22,8 @@ class Article(models.Model):
         if product_image is not None: self.product_image = product_image
         if category is not None: self.category = category
         if price is not None: self.price = price
+
+
+class ProductImage(models.Model):
+    article = models.ForeignKey(Article, related_name='product_images', null=False, on_delete=models.CASCADE)
+    product_image = models.ImageField(upload_to=upload_product_image)

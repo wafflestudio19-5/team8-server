@@ -8,9 +8,11 @@ from .serializers import UserLoginSerializer, UserCreateSerializer,  UserAuthSer
 
 import requests
 from django.core.exceptions import ValidationError
+from django.core.files import File
 from google.oauth2 import id_token
 from google.auth.transport.requests import Request
 import os
+import urllib
 import wafflemarket.settings as settings
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -93,8 +95,7 @@ class GoogleSigninCallBackApi(APIView):
         username = username.replace(' ', '').replace('\xad', '')
         profile_data = {
             'email': idinfo['email'],
-            'username': username,
-            'profile_image': idinfo.get('picture', None)
+            'username': username
         }
         
         # signup or login with given info
