@@ -102,12 +102,9 @@ class ArticleViewSet(viewsets.GenericViewSet):
     
     def list(self, request):
         user = request.user
-        try:
-            page_id = int(request.data.get('page'))
-        except:
-            return Response({"올바른 값을 넣어주세요."}, status=status.HTTP_400_BAD_REQUEST)
-        category = request.data.get('category')
-        keyword = request.data.get('keyword')
+        page_id = request.GET.get('page', None)
+        category = request.GET.get('category', None)
+        keyword = request.GET.get('keyword', None)
         category_list = ['디지털기기', '가구/인테리어', '생활/가공식품', '스포츠/레저', '여성의류', '게임/취미', '반려동물용품', '식물',
                     '삽니다', '생활가전', '유아동', '유아도서', '여성잡화', '남성패션/잡화', '뷰티/미용', '도서/티켓/음반', '기타 중고물품']
         user_category_list = []
@@ -118,9 +115,9 @@ class ArticleViewSet(viewsets.GenericViewSet):
             neighborhood.append(location_neighborhood.neighborhood.id)
         articles = self.queryset.filter(location__id__in=neighborhood)
 
-        if keyword is None:
+        if not keyword:
             # check categories to filter article
-            if category is None:
+            if not category:
                 for i, enable in enumerate(list(user.interest)):
                     if enable == "1":
                         user_category_list.append(category_list[i])
@@ -140,10 +137,11 @@ class ArticleViewSet(viewsets.GenericViewSet):
         pages = Paginator(articles, 15)
 
         # check if page_id is valid
-        if page_id is None:
+        if not page_id:
             return Response(self.get_serializer(articles, many=True).data, status=status.HTTP_200_OK)
         serializer = ArticlePaginationValidator(data={'page_id': page_id, 'article_num': articles.count()})
         serializer.is_valid(raise_exception=True)
+
         page_id = serializer.data.get('page_id')
         return Response(self.get_serializer(pages.page(page_id), many=True).data, status=status.HTTP_200_OK)
     
