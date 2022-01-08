@@ -46,8 +46,7 @@ class UserAuthView(APIView):
         serializer = UserAuthSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         auth = serializer.save()
-        return Response(data={'phone_number': auth.phone_number, 'auth_number': auth.auth_number},
-                        status=status.HTTP_200_OK)
+        return Response(data={'phone_number': auth.phone_number}, status=status.HTTP_200_OK)
         
     def put(self, request):
         serializer = UserAuthSerializer(data=request.data)

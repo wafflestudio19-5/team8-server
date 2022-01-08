@@ -39,7 +39,7 @@ class Auth(models.Model):
     def create_auth_number(self):
         self.auth_number = randint(1000, 10000)
         self.save()
-        #self.send_sms() # 인증번호가 담긴 SMS를 전송
+        self.send_sms() # 인증번호가 담긴 SMS를 전송
         
     def send_sms(self):
         
