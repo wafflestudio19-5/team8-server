@@ -2,8 +2,8 @@ from rest_framework import status, viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.core.files.base import ContentFile
 
+from django.core.files.base import ContentFile
 from django.core.paginator import Paginator
 from django.utils import timezone
 
@@ -38,10 +38,11 @@ class ArticleViewSet(viewsets.GenericViewSet):
         for i in range(1, image_count + 1):
             field_name = "image_" + str(i)
             image = request.FILES.get(field_name)
-            new_image = ContentFile(image.read())
-            new_image.name = image.name
-
-            ProductImage.objects.create(article=article, product_image=image, product_thumbnail=new_image)
+            thumbnail = ContentFile(image.read())
+            thumbnail.name = image.name
+            ProductImage.objects.create(
+                article=article, product_image=image, product_thumbnail=thumbnail
+            )
         return Response(
             self.get_serializer(article).data, status=status.HTTP_201_CREATED
         )

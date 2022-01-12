@@ -60,4 +60,9 @@ class ProductImage(models.Model):
         Article, related_name="product_images", null=False, on_delete=models.CASCADE
     )
     product_image = models.ImageField(upload_to=upload_product_image)
-    product_thumbnail = ProcessedImageField(null=True, upload_to=upload_product_image,processors=[ResizeToFit(height=120)], format='JPEG')
+    product_thumbnail = ProcessedImageField(
+        null=True,
+        upload_to=upload_product_image,
+        processors=[ResizeToFit(height=120)],
+        format="JPEG",
+    )

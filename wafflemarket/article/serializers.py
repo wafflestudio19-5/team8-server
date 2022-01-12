@@ -149,17 +149,17 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
-    original_url = serializers.SerializerMethodField(read_only=True)
+    image_url = serializers.SerializerMethodField(read_only=True)
     thumbnail_url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = ProductImage
         fields = (
-            "original_url",
+            "image_url",
             "thumbnail_url",
         )
 
-    def get_original_url(self, object):
+    def get_image_url(self, object):
         url = object.product_image.url
         if url.find("?") == -1:
             return url
