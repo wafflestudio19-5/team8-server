@@ -1,3 +1,6 @@
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFit
+
 from django.db import models
 
 from user.models import User
@@ -17,7 +20,6 @@ class Article(models.Model):
     )
     title = models.CharField(max_length=20)
     content = models.CharField(max_length=255)
-    product_image = models.ImageField(blank=True, upload_to=upload_product_image)
     category = models.CharField(max_length=20)
     price = models.PositiveBigIntegerField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -58,3 +60,4 @@ class ProductImage(models.Model):
         Article, related_name="product_images", null=False, on_delete=models.CASCADE
     )
     product_image = models.ImageField(upload_to=upload_product_image)
+    product_thumbnail = ProcessedImageField(null=True, upload_to=upload_product_image,processors=[ResizeToFit(height=120)], format='JPEG')

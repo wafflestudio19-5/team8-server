@@ -149,14 +149,24 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
-    url = serializers.SerializerMethodField(read_only=True)
+    original_url = serializers.SerializerMethodField(read_only=True)
+    thumbnail_url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = ProductImage
-        fields = ("url",)
+        fields = (
+            "original_url",
+            "thumbnail_url",
+        )
 
-    def get_url(self, object):
+    def get_original_url(self, object):
         url = object.product_image.url
+        if url.find("?") == -1:
+            return url
+        return url[: url.find("?")]
+
+    def get_thumbnail_url(self, object):
+        url = object.product_thumbnail.url
         if url.find("?") == -1:
             return url
         return url[: url.find("?")]

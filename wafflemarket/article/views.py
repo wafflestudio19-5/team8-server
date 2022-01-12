@@ -2,6 +2,7 @@ from rest_framework import status, viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.core.files.base import ContentFile
 
 from django.core.paginator import Paginator
 from django.utils import timezone
@@ -27,7 +28,7 @@ class ArticleViewSet(viewsets.GenericViewSet):
         serializer.is_valid(raise_exception=True)
         image_count = int(serializer.data["image_count"])
         for i in range(1, image_count + 1):
-            field_name = "product_image_" + str(i)
+            field_name = "image_" + str(i)
             if request.FILES.get(field_name) is None:
                 return Response(
                     data="업로드 형식이 올바르지 않습니다.", status=status.HTTP_400_BAD_REQUEST
@@ -35,9 +36,12 @@ class ArticleViewSet(viewsets.GenericViewSet):
 
         article = serializer.create_article(serializer.validated_data, request.user)
         for i in range(1, image_count + 1):
-            field_name = "product_image_" + str(i)
-            product_image = request.FILES.get(field_name)
-            ProductImage.objects.create(article=article, product_image=product_image)
+            field_name = "image_" + str(i)
+            image = request.FILES.get(field_name)
+            new_image = ContentFile(image.read())
+            new_image.name = image.name
+
+            ProductImage.objects.create(article=article, product_image=image, product_thumbnail=new_image)
         return Response(
             self.get_serializer(article).data, status=status.HTTP_201_CREATED
         )
