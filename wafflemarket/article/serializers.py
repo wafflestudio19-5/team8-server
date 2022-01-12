@@ -86,6 +86,8 @@ class ArticleSerializer(serializers.ModelSerializer):
             "created_at",
             "sold_at",  # None이면 거래중
             "buyer",  # None이면 거래중
+            'hit',
+            'like',
         )
 
     def get_seller(self, article):

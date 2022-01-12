@@ -22,6 +22,10 @@ class Article(models.Model):
     price = models.PositiveBigIntegerField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     sold_at = models.DateTimeField(null=True, default=None)
+    
+    hit = models.PositiveBigIntegerField(default=0)
+    like = models.PositiveBigIntegerField(default=0)
+    liked_users = models.ManyToManyField(User, blank=True, related_name = "liked_articles")
 
     def update(
         self, title=None, content=None, product_image=None, category=None, price=None
