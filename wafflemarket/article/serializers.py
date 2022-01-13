@@ -69,6 +69,7 @@ class ArticleCreateSerializer(serializers.Serializer):
 class ArticleSerializer(serializers.ModelSerializer):
     seller = serializers.SerializerMethodField(read_only=True)
     location = serializers.SerializerMethodField(read_only=True)
+    delete_enable = serializers.SerializerMethodField(read_only=True)
     product_images = serializers.SerializerMethodField(read_only=True)
     buyer = serializers.SerializerMethodField(read_only=True)
 
@@ -78,6 +79,7 @@ class ArticleSerializer(serializers.ModelSerializer):
             "id",
             "seller",
             "location",
+            "delete_enable",
             "title",
             "content",
             "product_images",
@@ -94,6 +96,10 @@ class ArticleSerializer(serializers.ModelSerializer):
 
     def get_location(self, article):
         return LocationSerializer(article.location, context=self.context).data
+    
+    def get_delete_enable(self, article):
+        user = self.context["user"]
+        return article.seller == user
 
     def get_product_images(self, article):
         return ProductImageSerializer(

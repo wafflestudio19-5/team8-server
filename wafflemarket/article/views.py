@@ -37,8 +37,13 @@ class ArticleViewSet(viewsets.GenericViewSet):
             field_name = "product_image_" + str(i)
             product_image = request.FILES.get(field_name)
             ProductImage.objects.create(article=article, product_image=product_image)
+        
         return Response(
-            self.get_serializer(article).data, status=status.HTTP_201_CREATED
+            ArticleSerializer(
+                article, 
+                context={"user": request.user}
+            ).data, 
+            status=status.HTTP_201_CREATED,
         )
 
     def update(self, request, pk=None):
@@ -54,7 +59,13 @@ class ArticleViewSet(viewsets.GenericViewSet):
         serializer = ArticleCreateSerializer(article, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         article = serializer.update_article(serializer.validated_data, article)
-        return Response(self.get_serializer(article).data, status=status.HTTP_200_OK)
+        
+        return Response(
+            ArticleSerializer(
+                article, context={"user": request.user},
+            ).data,
+            status=status.HTTP_200_OK,
+        )
 
     @action(detail=True, methods=["PUT", "DELETE"])
     def purchase(self, request, pk):
@@ -75,7 +86,13 @@ class ArticleViewSet(viewsets.GenericViewSet):
             article.sold_at = None
             article.buyer = None
             article.save()
-        return Response(self.get_serializer(article).data, status=status.HTTP_200_OK)
+            
+        return Response(
+            ArticleSerializer(
+                article, context={"user": request.user},
+            ).data,
+            status=status.HTTP_200_OK,
+        )
 
     @action(detail=True, methods=["PUT", "DELETE"])
     def buyer(self, request, pk=None):
@@ -104,8 +121,13 @@ class ArticleViewSet(viewsets.GenericViewSet):
             article.buyer = None
             article.sold_at = None
             article.save()
-
-        return Response(self.get_serializer(article).data, status=status.HTTP_200_OK)
+            
+        return Response(
+            ArticleSerializer(
+                article, context={"user": request.user},
+            ).data,
+            status=status.HTTP_200_OK,
+        )
 
     def destroy(self, request, pk=None):
         if Article.objects.filter(id=pk).exists():
@@ -178,7 +200,10 @@ class ArticleViewSet(viewsets.GenericViewSet):
         # check if page_id is valid
         if not page_id:
             return Response(
-                self.get_serializer(articles, many=True).data, status=status.HTTP_200_OK
+                ArticleSerializer(
+                    articles, many=True, context={"user" : request.user},
+                ).data, 
+                status=status.HTTP_200_OK,
             )
         serializer = ArticlePaginationValidator(
             data={"page_id": page_id, "article_num": articles.count()}
@@ -187,7 +212,9 @@ class ArticleViewSet(viewsets.GenericViewSet):
 
         page_id = serializer.data.get("page_id")
         return Response(
-            self.get_serializer(pages.page(page_id), many=True).data,
+            ArticleSerializer(
+                pages.page(page_id), many=True, context={"user": request.user},
+            ).data,
             status=status.HTTP_200_OK,
         )
 
@@ -196,7 +223,12 @@ class ArticleViewSet(viewsets.GenericViewSet):
             article = Article.objects.get(id=pk)
         else:
             return Response({"해당하는 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
-        return Response(self.get_serializer(article).data, status=status.HTTP_200_OK)
+        return Response(
+            ArticleSerializer(
+                article, context={"user": request.user}
+            ).data, 
+            status=status.HTTP_200_OK
+        )
     
     @action(detail=True, methods=['PUT'])
     def like(self, request, pk):
@@ -215,7 +247,12 @@ class ArticleViewSet(viewsets.GenericViewSet):
                 article.liked_users.add(user)
                 article.like += 1
                 article.save()
-            return Response(self.get_serializer(article).data, status=status.HTTP_200_OK)
+            return Response(
+                ArticleSerializer(
+                    article, context={"user": request.user}
+                ).data, 
+                status=status.HTTP_200_OK
+            )
 
     @action(detail=True, methods=["POST", "GET"])
     def comment(self, request, pk):
