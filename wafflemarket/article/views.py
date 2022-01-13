@@ -24,7 +24,7 @@ class ArticleViewSet(viewsets.GenericViewSet):
     def create(self, request):
         serializer = ArticleCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        image_count = int(serializer.data["image_count"])
+        image_count = int(serializer.validated_data["image_count"])
         for i in range(1, image_count + 1):
             field_name = "product_image_" + str(i)
             if request.FILES.get(field_name) is None:
@@ -58,6 +58,19 @@ class ArticleViewSet(viewsets.GenericViewSet):
 
         serializer = ArticleCreateSerializer(article, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
+        image_count = int(serializer.validated_data["image_count"])
+        for i in range(1, image_count + 1):
+            field_name = "product_image_" + str(i)
+            if request.FILES.get(field_name) is None:
+                return Response(
+                    data="업로드 형식이 올바르지 않습니다.", status=status.HTTP_400_BAD_REQUEST
+                )
+                
+        article = serializer.create_article(serializer.validated_data, request.user)
+        for i in range(1, image_count + 1):
+            field_name = "product_image_" + str(i)
+            product_image = request.FILES.get(field_name)
+            ProductImage.objects.create(article=article, product_image=product_image)
         article = serializer.update_article(serializer.validated_data, article)
         
         return Response(
