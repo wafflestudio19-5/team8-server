@@ -1,5 +1,6 @@
 import os
 import re
+import time
 import datetime
 import urllib.request
 
@@ -169,6 +170,12 @@ class UserSerializer(serializers.ModelSerializer):
     profile_image = serializers.SerializerMethodField(read_only=True)
     location = serializers.SerializerMethodField(read_only=True)
     article_cnt = serializers.SerializerMethodField(read_only=True)
+    
+    created_at = serializers.SerializerMethodField(read_only=True)
+    last_login = serializers.SerializerMethodField(read_only=True)
+    leaved_at = serializers.SerializerMethodField(read_only=True)
+    username_changed_at = serializers.SerializerMethodField(read_only=True)
+    
 
     class Meta:
         model = User
@@ -203,7 +210,27 @@ class UserSerializer(serializers.ModelSerializer):
     def get_article_cnt(self, user):
         article_cnt = Article.objects.filter(seller=user).count()
         return article_cnt
-
+    
+    def get_created_at(self, user):
+        if user.created_at is not None:
+            return time.mktime(user.created_at.timetuple())-54000
+        else:
+            return None
+    def get_last_login(self, user):
+        if user.last_login is not None:
+            return time.mktime(user.last_login.timetuple())-54000
+        else:
+            return None
+    def get_leaved_at(self, user):
+        if user.leaved_at is not None:
+            return time.mktime(user.leaved_at.timetuple())-54000
+        else:
+            return None
+    def get_username_changed_at(self, user):
+        if user.username_changed_at is not None:
+            return time.mktime(user.username_changed_at.timetuple())-54000
+        else:
+            return None
 
 class UserSimpleSerializer(serializers.ModelSerializer):
     location = serializers.SerializerMethodField(read_only=True)
