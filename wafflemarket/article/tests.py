@@ -493,8 +493,8 @@ class PostCommentTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         res_data = response.data
-        self.assertEqual(len(res_data["comments"]), 1)
-        comment = res_data["comments"][0]
+        self.assertEqual(len(res_data), 1)
+        comment = res_data[0]
         self.assertEqual(comment["id"], 1)
         self.assertEqual(comment["commenter"]["id"], self.user2.id)
         self.assertEqual(comment["content"], "맥북 구매 원합니다.")
@@ -830,7 +830,7 @@ class PostReplyTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         res_data = response.data
-        reply = res_data["comments"][0]["replies"][0]
+        reply = res_data[0]["replies"][0]
         self.assertEqual(reply["id"], 3)
         self.assertEqual(reply["commenter"]["id"], self.user1.id)
         self.assertEqual(reply["content"], "직거래 가능하신가요?")
@@ -850,3 +850,87 @@ class PostReplyTestCase(TestCase):
         self.assertIsNone(comment.deleted_at)
 
         self.assertEqual(Comment.objects.count(), 3)
+
+
+class PutLikeTestCase(TestCase):
+    @classmethod
+    def setUp(cls):
+        cls.user1 = UserFactory(
+            phone_number="01011112222",
+            username="steve",
+        )
+        cls.user1_token = "JWT " + jwt_token_of(
+            User.objects.get(phone_number="01011112222")
+        )
+        cls.user2 = UserFactory(
+            phone_number="01022223333",
+            username="mark",
+        )
+        cls.user2_token = "JWT " + jwt_token_of(
+            User.objects.get(phone_number="01022223333")
+        )
+        cls.article = ArticleFactory(
+            seller=cls.user1,
+            price=3040000,
+            title="맥북 판매",
+            content="성능 좋은 맥북 판매해요.",
+            category="디지털기기",
+        )
+
+    def test_put_like_no_login(self):
+        pk = str(self.article.id)
+
+        # no token
+        response = self.client.put("/api/v1/article/%s/like/" % pk, data={})
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        article = Article.objects.get(pk=int(pk))
+        self.assertEqual(article.like, 0)
+
+    def test_put_like_article_id(self):
+        # wrong article id
+        pk = str(self.article.id + 20)
+
+        response = self.client.put(
+            "/api/v1/article/%s/like/" % pk,
+            data={},
+            HTTP_AUTHORIZATION=self.user2_token,
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        res_data = response.json()
+        self.assertEqual(res_data[0], "해당하는 게시글을 찾을 수 없습니다.")
+
+        article = Article.objects.get(pk=self.article.id)
+        self.assertEqual(article.like, 0)
+
+    def test_put_like_sucess(self):
+        pk = str(self.article.id)
+
+        # successively add new like
+        response = self.client.put(
+            "/api/v1/article/%s/like/" % pk,
+            data={},
+            HTTP_AUTHORIZATION=self.user2_token,
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        res_data = response.data
+        self.assertEqual(res_data["like"], 1)
+
+        article = Article.objects.get(pk=int(pk))
+        self.assertEqual(article.like, 1)
+
+        # successively delete new like
+        response = self.client.put(
+            "/api/v1/article/%s/like/" % pk,
+            data={},
+            HTTP_AUTHORIZATION=self.user2_token,
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        res_data = response.data
+        self.assertEqual(res_data["like"], 0)
+
+        article = Article.objects.get(pk=int(pk))
+        self.assertEqual(article.like, 0)

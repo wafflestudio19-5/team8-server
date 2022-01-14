@@ -237,9 +237,11 @@ class UserCategoryView(APIView):
 
 
 class UserLikedView(APIView):
-    permission_classes = (permissions.IsAuthenticated, )
-    
+    permission_classes = (permissions.IsAuthenticated,)
+
     def get(self, request):
         user = request.user
         article = user.liked_articles.all()
-        return Response(ArticleSerializer(article, many=True).data, status=status.HTTP_200_OK)
+        return Response(
+            ArticleSerializer(article, many=True).data, status=status.HTTP_200_OK
+        )
