@@ -147,6 +147,8 @@ class UserLeaveView(APIView):
 
 class UserViewSet(viewsets.GenericViewSet):
     permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
 
     def list(self, request):
         user = request.user
