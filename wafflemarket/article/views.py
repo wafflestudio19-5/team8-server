@@ -204,6 +204,27 @@ class ArticleViewSet(viewsets.GenericViewSet):
             return Response({"해당하는 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
         return Response(self.get_serializer(article).data, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=["PUT"])
+    def like(self, request, pk):
+        if Article.objects.filter(id=pk).exists():
+            article = Article.objects.get(id=pk)
+        else:
+            return Response({"해당하는 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+        user = request.user
+
+        if self.request.method == "PUT":
+            if article.liked_users.filter(pk=user.id).exists():
+                article.liked_users.remove(user)
+                article.like -= 1
+                article.save()
+            else:
+                article.liked_users.add(user)
+                article.like += 1
+                article.save()
+            return Response(
+                self.get_serializer(article).data, status=status.HTTP_200_OK
+            )
+
     @action(detail=True, methods=["POST", "GET"])
     def comment(self, request, pk):
         if Article.objects.filter(id=pk).exists():

@@ -21,6 +21,8 @@ from user.serializers import (
     UserSimpleSerializer,
     UserCategorySerializer,
 )
+from article.models import Article
+from article.serializers import ArticleSerializer
 
 
 User = get_user_model()
@@ -232,3 +234,14 @@ class UserCategoryView(APIView):
         user = request.user
         data = self.get_list(user)
         return Response(data, status=status.HTTP_200_OK)
+
+
+class UserLikedView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        user = request.user
+        article = user.liked_articles.all()
+        return Response(
+            ArticleSerializer(article, many=True).data, status=status.HTTP_200_OK
+        )
