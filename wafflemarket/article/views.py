@@ -337,5 +337,5 @@ class CommentView(APIView):
         comments = Comment.objects.filter(article=article)
         return Response(
             CommentSerializer(comments, many=True, context={"user": request.user}).data,
-            status=status.HTTP_200_OK,
+            status=status.HTTP_201_CREATED,
         )
