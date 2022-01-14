@@ -237,8 +237,8 @@ class UserCategoryView(APIView):
 
 
 class UserLikedView(APIView):
-    permission_classes = (permissions.IsAuthenticated, )
-    
+    permission_classes = (permissions.IsAuthenticated,)
+
     def get(self, request):
         user = request.user
         article = user.liked_articles.all()

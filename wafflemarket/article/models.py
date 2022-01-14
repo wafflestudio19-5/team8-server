@@ -16,7 +16,7 @@ class Article(models.Model):
         Location, related_name="articles", null=True, on_delete=models.SET_NULL
     )
     liked_users = models.ManyToManyField(
-        User, blank=True, related_name = "liked_articles"
+        User, blank=True, related_name="liked_articles"
     )
     title = models.CharField(max_length=20)
     content = models.CharField(max_length=255)

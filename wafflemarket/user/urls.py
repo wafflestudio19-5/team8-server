@@ -31,6 +31,6 @@ urlpatterns = [
     path(
         "user/category/", UserCategoryView.as_view(), name="category"
     ),  # /api/v1/user/interest/
-    path("user/liked/", UserLikedView.as_view(), name="liked"), # /api/v1/user/likes/
+    path("user/liked/", UserLikedView.as_view(), name="liked"),  # /api/v1/user/likes/
     path("", include(router.urls)),
 ]

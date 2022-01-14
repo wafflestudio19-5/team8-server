@@ -850,8 +850,7 @@ class PostReplyTestCase(TestCase):
         self.assertIsNone(comment.deleted_at)
 
         self.assertEqual(Comment.objects.count(), 3)
-        
-        
+
 
 class PutLikeTestCase(TestCase):
     @classmethod
@@ -877,25 +876,23 @@ class PutLikeTestCase(TestCase):
             content="성능 좋은 맥북 판매해요.",
             category="디지털기기",
         )
-        
+
     def test_put_like_no_login(self):
         pk = str(self.article.id)
-        
+
         # no token
-        response = self.client.put(
-            "/api/v1/article/%s/like/" %pk, data={}
-        )
+        response = self.client.put("/api/v1/article/%s/like/" % pk, data={})
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        
+
         article = Article.objects.get(pk=int(pk))
         self.assertEqual(article.like, 0)
 
     def test_put_like_article_id(self):
         # wrong article id
-        pk = str(self.article.id+20)
+        pk = str(self.article.id + 20)
 
         response = self.client.put(
-            "/api/v1/article/%s/like/" %pk,
+            "/api/v1/article/%s/like/" % pk,
             data={},
             HTTP_AUTHORIZATION=self.user2_token,
         )
@@ -903,16 +900,16 @@ class PutLikeTestCase(TestCase):
 
         res_data = response.json()
         self.assertEqual(res_data[0], "해당하는 게시글을 찾을 수 없습니다.")
-        
+
         article = Article.objects.get(pk=self.article.id)
         self.assertEqual(article.like, 0)
-        
+
     def test_put_like_sucess(self):
         pk = str(self.article.id)
-        
+
         # successively add new like
         response = self.client.put(
-            "/api/v1/article/%s/like/" %pk,
+            "/api/v1/article/%s/like/" % pk,
             data={},
             HTTP_AUTHORIZATION=self.user2_token,
         )
@@ -920,13 +917,13 @@ class PutLikeTestCase(TestCase):
 
         res_data = response.data
         self.assertEqual(res_data["like"], 1)
-        
+
         article = Article.objects.get(pk=int(pk))
         self.assertEqual(article.like, 1)
-        
+
         # successively delete new like
         response = self.client.put(
-            "/api/v1/article/%s/like/" %pk,
+            "/api/v1/article/%s/like/" % pk,
             data={},
             HTTP_AUTHORIZATION=self.user2_token,
         )
@@ -934,8 +931,6 @@ class PutLikeTestCase(TestCase):
 
         res_data = response.data
         self.assertEqual(res_data["like"], 0)
-        
+
         article = Article.objects.get(pk=int(pk))
         self.assertEqual(article.like, 0)
-        
-
