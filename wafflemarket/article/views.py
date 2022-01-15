@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timedelta
 
 from rest_framework import status, viewsets, permissions
 from rest_framework.decorators import action
@@ -204,26 +204,26 @@ class ArticleViewSet(viewsets.GenericViewSet):
             article = Article.objects.get(id=pk)
         else:
             return Response({"해당하는 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+        if article.seller == request.user:
+            return Response(ArticleSerializer(article, context={"user": request.user}).data, status=status.HTTP_200_OK)
         
-        response = Response(ArticleSerializer(article, context={"user": request.user}).data, status=status.HTTP_200_OK)
-
-        login_session = request.session.get("login_session", "")
-        if article.seller.id == login_session:
-            return response
-        
+        article_id = pk
+        user_id = request.user.id
         cookie_value = request.COOKIES.get("hit", "_")
-        expire_date, now = datetime.datetime.now() + datetime.timedelta(hours=1), datetime.datetime.now()
+        expire_date, now = datetime.now() + timedelta(hours=1), datetime.now()
         expire_date = expire_date.replace(minute=0, second=0, microsecond=0)
         expire_date -= now
         max_age = expire_date.total_seconds()
-        id = request.user.id
         
-        if "{%s}_"%id not in cookie_value:
-            cookie_value += "{%s}_"%id
-            response.set_cookie("hit", value=cookie_value, max_age=max_age, httponly=True)
+        if "_{%s}&{%s}_"%(article_id, user_id) not in cookie_value :
             article.hit += 1
             article.save()
-        return response
+            cookie_value += "{%s}&{%s}_"%(article_id, user_id)
+            response = Response(ArticleSerializer(article, context={"user": request.user}).data, status=status.HTTP_200_OK)
+            response.set_cookie("hit", value=cookie_value, max_age=max_age, httponly=True)
+            return response
+        else:
+            return Response(ArticleSerializer(article, context={"user": request.user}).data, status=status.HTTP_200_OK)
     
     @action(detail=True, methods=["PUT"])
     def like(self, request, pk):
