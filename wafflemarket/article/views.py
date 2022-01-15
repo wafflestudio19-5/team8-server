@@ -1,3 +1,5 @@
+import datetime
+
 from rest_framework import status, viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -33,7 +35,7 @@ class ArticleViewSet(viewsets.GenericViewSet):
                 return Response(
                     data="업로드 형식이 올바르지 않습니다.", status=status.HTTP_400_BAD_REQUEST
                 )
-
+                
         article = serializer.create_article(serializer.validated_data, request.user)
         for i in range(1, image_count + 1):
             field_name = "image_" + str(i)
@@ -202,8 +204,27 @@ class ArticleViewSet(viewsets.GenericViewSet):
             article = Article.objects.get(id=pk)
         else:
             return Response({"해당하는 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
-        return Response(self.get_serializer(article).data, status=status.HTTP_200_OK)
+        
+        response = Response(ArticleSerializer(article, context={"user": request.user}).data, status=status.HTTP_200_OK)
 
+        login_session = request.session.get("login_session", "")
+        if article.seller.id == login_session:
+            return response
+        
+        cookie_value = request.COOKIES.get("hit", "_")
+        expire_date, now = datetime.datetime.now() + datetime.timedelta(hours=1), datetime.datetime.now()
+        expire_date = expire_date.replace(minute=0, second=0, microsecond=0)
+        expire_date -= now
+        max_age = expire_date.total_seconds()
+        id = request.user.id
+        
+        if "{%s}_"%id not in cookie_value:
+            cookie_value += "{%s}_"%id
+            response.set_cookie("hit", value=cookie_value, max_age=max_age, httponly=True)
+            article.hit += 1
+            article.save()
+        return response
+    
     @action(detail=True, methods=["PUT"])
     def like(self, request, pk):
         if Article.objects.filter(id=pk).exists():
@@ -211,7 +232,7 @@ class ArticleViewSet(viewsets.GenericViewSet):
         else:
             return Response({"해당하는 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
         user = request.user
-
+        
         if self.request.method == "PUT":
             if article.liked_users.filter(pk=user.id).exists():
                 article.liked_users.remove(user)
