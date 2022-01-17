@@ -30,7 +30,7 @@ class Article(models.Model):
     like = models.PositiveBigIntegerField(default=0)
 
     def update(
-        self, title=None, content=None, product_image=None, category=None, price=None
+        self, title=None, content=None, product_image=None, category=None, price=None, **kwargs,
     ):
         if title is not None:
             self.title = title
