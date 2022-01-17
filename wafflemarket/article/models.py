@@ -27,7 +27,7 @@ class Article(models.Model):
     price = models.PositiveBigIntegerField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     sold_at = models.DateTimeField(null=True, default=None)
-    hit = like = models.PositiveBigIntegerField(default=0)
+    hit = models.PositiveBigIntegerField(default=0)
     like = models.PositiveBigIntegerField(default=0)
 
     def update(
