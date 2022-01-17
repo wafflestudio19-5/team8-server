@@ -28,7 +28,7 @@ class ArticleViewSet(viewsets.GenericViewSet):
     def create(self, request):
         serializer = ArticleCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        image_count = int(serializer.data["image_count"])
+        image_count = int(serializer.validated_data["image_count"])
         for i in range(1, image_count + 1):
             field_name = "image_" + str(i)
             if request.FILES.get(field_name) is None:
@@ -46,7 +46,11 @@ class ArticleViewSet(viewsets.GenericViewSet):
                 article=article, product_image=image, product_thumbnail=thumbnail
             )
         return Response(
-            self.get_serializer(article).data, status=status.HTTP_201_CREATED
+            ArticleSerializer(
+                article, 
+                context={"user": request.user}
+            ).data, 
+            status=status.HTTP_201_CREATED,
         )
 
     def update(self, request, pk=None):
@@ -61,8 +65,31 @@ class ArticleViewSet(viewsets.GenericViewSet):
 
         serializer = ArticleCreateSerializer(article, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
+        image_count = int(serializer.validated_data["image_count"])
+        for i in range(1, image_count + 1):
+            field_name = "product_image_" + str(i)
+            if request.FILES.get(field_name) is None:
+                return Response(
+                    data="업로드 형식이 올바르지 않습니다.", status=status.HTTP_400_BAD_REQUEST
+                )
+                
+        article = serializer.create_article(serializer.validated_data, request.user)
+        for i in range(1, image_count + 1):
+            field_name = "image_" + str(i)
+            image = request.FILES.get(field_name)
+            thumbnail = ContentFile(image.read())
+            thumbnail.name = image.name
+            ProductImage.objects.create(
+                article=article, product_image=image, product_thumbnail=thumbnail
+            )
         article = serializer.update_article(serializer.validated_data, article)
-        return Response(self.get_serializer(article).data, status=status.HTTP_200_OK)
+        
+        return Response(
+            ArticleSerializer(
+                article, context={"user": request.user},
+            ).data,
+            status=status.HTTP_200_OK,
+        )
 
     @action(detail=True, methods=["PUT", "DELETE"])
     def purchase(self, request, pk):
@@ -83,7 +110,13 @@ class ArticleViewSet(viewsets.GenericViewSet):
             article.sold_at = None
             article.buyer = None
             article.save()
-        return Response(self.get_serializer(article).data, status=status.HTTP_200_OK)
+            
+        return Response(
+            ArticleSerializer(
+                article, context={"user": request.user},
+            ).data,
+            status=status.HTTP_200_OK,
+        )
 
     @action(detail=True, methods=["PUT", "DELETE"])
     def buyer(self, request, pk=None):
@@ -112,8 +145,13 @@ class ArticleViewSet(viewsets.GenericViewSet):
             article.buyer = None
             article.sold_at = None
             article.save()
-
-        return Response(self.get_serializer(article).data, status=status.HTTP_200_OK)
+            
+        return Response(
+            ArticleSerializer(
+                article, context={"user": request.user},
+            ).data,
+            status=status.HTTP_200_OK,
+        )
 
     def destroy(self, request, pk=None):
         if Article.objects.filter(id=pk).exists():
@@ -186,7 +224,10 @@ class ArticleViewSet(viewsets.GenericViewSet):
         # check if page_id is valid
         if not page_id:
             return Response(
-                self.get_serializer(articles, many=True).data, status=status.HTTP_200_OK
+                ArticleSerializer(
+                    articles, many=True, context={"user" : request.user},
+                ).data, 
+                status=status.HTTP_200_OK,
             )
         serializer = ArticlePaginationValidator(
             data={"page_id": page_id, "article_num": articles.count()}
@@ -195,7 +236,9 @@ class ArticleViewSet(viewsets.GenericViewSet):
 
         page_id = serializer.data.get("page_id")
         return Response(
-            self.get_serializer(pages.page(page_id), many=True).data,
+            ArticleSerializer(
+                pages.page(page_id), many=True, context={"user": request.user},
+            ).data,
             status=status.HTTP_200_OK,
         )
 
@@ -243,7 +286,10 @@ class ArticleViewSet(viewsets.GenericViewSet):
                 article.like += 1
                 article.save()
             return Response(
-                self.get_serializer(article).data, status=status.HTTP_200_OK
+                ArticleSerializer(
+                    article, context={"user": request.user}
+                ).data, 
+                status=status.HTTP_200_OK
             )
 
     @action(detail=True, methods=["POST", "GET"])
@@ -316,5 +362,5 @@ class CommentView(APIView):
         comments = Comment.objects.filter(article=article)
         return Response(
             CommentSerializer(comments, many=True, context={"user": request.user}).data,
-            status=status.HTTP_200_OK,
+            status=status.HTTP_201_CREATED,
         )

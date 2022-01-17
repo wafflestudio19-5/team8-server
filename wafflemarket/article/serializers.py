@@ -1,3 +1,5 @@
+import time
+
 from rest_framework import serializers
 
 from user.serializers import UserSimpleSerializer
@@ -69,8 +71,12 @@ class ArticleCreateSerializer(serializers.Serializer):
 class ArticleSerializer(serializers.ModelSerializer):
     seller = serializers.SerializerMethodField(read_only=True)
     location = serializers.SerializerMethodField(read_only=True)
+    delete_enable = serializers.SerializerMethodField(read_only=True)
     product_images = serializers.SerializerMethodField(read_only=True)
     buyer = serializers.SerializerMethodField(read_only=True)
+    
+    created_at = serializers.SerializerMethodField(read_only=True)
+    sold_at = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Article
@@ -78,6 +84,7 @@ class ArticleSerializer(serializers.ModelSerializer):
             "id",
             "seller",
             "location",
+            "delete_enable",
             "title",
             "content",
             "product_images",
@@ -95,6 +102,10 @@ class ArticleSerializer(serializers.ModelSerializer):
 
     def get_location(self, article):
         return LocationSerializer(article.location, context=self.context).data
+    
+    def get_delete_enable(self, article):
+        user = self.context["user"]
+        return article.seller == user
 
     def get_product_images(self, article):
         return ProductImageSerializer(
@@ -106,6 +117,18 @@ class ArticleSerializer(serializers.ModelSerializer):
             return None
         else:
             return UserSimpleSerializer(article.buyer, context=self.context).data
+        
+    def get_created_at(self, article):
+        if article.created_at is not None:
+            return time.mktime(article.created_at.timetuple())-54000
+        else:
+            return None
+        
+    def get_sold_at(self, article):
+        if article.sold_at is not None:
+            return time.mktime(article.sold_at.timetuple())-54000
+        else:
+            return None
 
 
 class CommentCreateSerializer(serializers.Serializer):
@@ -125,6 +148,9 @@ class CommentSerializer(serializers.ModelSerializer):
     commenter = serializers.SerializerMethodField(read_only=True)
     replies = serializers.SerializerMethodField(read_only=True)
     delete_enable = serializers.SerializerMethodField(read_only=True)
+    
+    created_at = serializers.SerializerMethodField(read_only=True)
+    deleted_at = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Comment
@@ -148,6 +174,18 @@ class CommentSerializer(serializers.ModelSerializer):
     def get_replies(self, comment):
         replies = Comment.objects.filter(parent=comment).order_by("created_at")
         return CommentSerializer(replies, context=self.context, many=True).data
+    
+    def get_created_at(self, comment):
+        if comment.created_at is not None:
+            return time.mktime(comment.created_at.timetuple())-54000
+        else:
+            return None
+        
+    def get_deleted_at(self, comment):
+        if comment.deleted_at is not None:
+            return time.mktime(comment.deleted_at.timetuple())-54000
+        else:
+            return None
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
