@@ -41,6 +41,8 @@ SITE_ID = 1
 # Application definition
 
 DJANGO_APPS = [
+    "channels",
+    "chat",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -205,3 +207,16 @@ AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_S3_BUCKET")
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 105000000
 FILE_UPLOAD_MAX_MEMORY_SIZE = 105000000
+
+
+# django channel
+
+ASGI_APPLICATION = 'wafflemarket.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
