@@ -1,6 +1,9 @@
 from rest_framework import status, viewsets, permissions
 from rest_framework.response import Response
 
+from django.db.models import Q
+from django.shortcuts import get_object_or_404
+
 from article.models import Article
 from chat.models import ChatRoom
 from chat.serializers import ChatRoomSerializer
@@ -11,10 +14,19 @@ class ChatRoomViewSet(viewsets.GenericViewSet):
     serializer_class = ChatRoomSerializer
     queryset = ChatRoom.objects.all()
 
+    # make chatroom
+    def post(self, request):
+        user = request.user
+        article_id = request.data.get("article_id")
+        article = get_object_or_404(Article, pk=article_id)
+        room_name = str(user.id) + "_" + str(article_id)
+        chatroom = ChatRoom.objects.create(name=room_name, article=article, seller=article.seller, buyer=user)
+        return Response(self.get_serializer(chatroom).data, status=status.HTTP_201_CREATED)
+
     # show all chatrooms of user
     def list(self, request):
         user = request.user
-        chatrooms = self.queryset.filter(seller=user)
+        chatrooms = self.queryset.filter(Q(seller=user)|Q(buyer=user))
         return Response(self.get_serializer(chatrooms, many=True).data, status=status.HTTP_200_OK)
 
     # show chatrooms which belongs to pk-th article

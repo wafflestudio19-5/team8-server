@@ -11,17 +11,16 @@ from chat.serializers import ChatSerializer
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.room_name = self.scope['url_route']['kwargs']['room_name']
-        self.room_group_name = 'chat_%s' % self.room_name
-        self.chatroom = ChatRoom.objects.get(name=self.room_name)
+        self.roomname = self.scope['url_route']['kwargs']['roomname']
+        self.room_group_name = 'chat_%s' % self.roomname
+        self.chatroom = ChatRoom.objects.get(name=self.roomname)
         self.serializer = ChatSerializer
         user_id = self.scope["query_string"].get("user_id")
+        latest_message = self.scope["query_string"].get("latest_message")
         try:
             self.user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             self.user = AnonymousUser()
-        latest_message = self.scope["body"].get("latest_message")
-        
 
         # Join room group
         await self.channel_layer.group_add(
