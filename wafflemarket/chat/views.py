@@ -1,4 +1,5 @@
 from rest_framework import status, viewsets, permissions
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from django.db.models import Q
@@ -20,7 +21,10 @@ class ChatRoomViewSet(viewsets.GenericViewSet):
         article_id = request.data.get("article_id")
         article = get_object_or_404(Article, pk=article_id)
         room_name = str(user.id) + "_" + str(article_id)
-        chatroom = ChatRoom.objects.create(name=room_name, article=article, seller=article.seller, buyer=user)
+        if self.queryset.filter(name=room_name).exists():
+            chatroom = self.queryset.get(name=room_name)
+        else:
+            chatroom = ChatRoom.objects.create(name=room_name, article=article, seller=article.seller, buyer=user)
         return Response(self.get_serializer(chatroom).data, status=status.HTTP_201_CREATED)
 
     # show all chatrooms of user
@@ -31,20 +35,18 @@ class ChatRoomViewSet(viewsets.GenericViewSet):
 
     # show chatrooms which belongs to pk-th article
     def retrieve(self, request, pk=None):
-        if pk is not None:
-            if Article.objects.filter(id=pk).exists():
-                article = Article.objects.get(id=pk)
-                if article.seller == request.user:
-                    return Response(
-                        self.get_serializer(article.chatrooms, many=True).data, status=status.HTTP_200_OK
-                    )
-                else:
-                    return Response(
-                        "해당 유저의 상품이 아닙니다.", status=status.HTTP_403_FORBIDDEN
-                    )
-            else:
-                return Response(
-                    "해당하는 상품이 존재하지 않습니다.", status=status.HTTP_404_NOT_FOUND
-                )
-        else:
+        if pk is None:
             return Response("올바른 요청을 보내주세요.", status=status.HTTP_403_FORBIDDEN)
+        if not Article.objects.filter(id=pk).exists():
+            return Response(
+                "해당하는 상품이 존재하지 않습니다.", status=status.HTTP_404_NOT_FOUND
+            )
+
+        article = Article.objects.get(id=pk)
+        if article.seller != request.user:
+            return Response(
+                "해당 유저의 상품이 아닙니다.", status=status.HTTP_403_FORBIDDEN
+            )
+        return Response(
+            self.get_serializer(article.chatrooms, many=True).data, status=status.HTTP_200_OK
+        )
