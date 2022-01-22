@@ -10,5 +10,5 @@ router = SimpleRouter()
 router.register("chat", ChatRoomViewSet, basename="chat")  # /api/v1/user/
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]

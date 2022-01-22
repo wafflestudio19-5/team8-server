@@ -34,7 +34,6 @@ ALLOWED_HOSTS = [
     "54.180.144.124",
     "127.0.0.1",
     "localhost",
-    "192.168.0.205",
 ]
 
 SITE_ID = 1
@@ -206,8 +205,8 @@ AWS_S3_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_S3_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_S3_BUCKET")
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 105000000
-FILE_UPLOAD_MAX_MEMORY_SIZE = 105000000
+DATA_UPLOAD_MAX_MEMORY_SIZE = 2100000
+FILE_UPLOAD_MAX_MEMORY_SIZE = 2100000
 
 
 # django channel
@@ -217,7 +216,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
+            "hosts": [('54.180.144.124', 6379)],
         },
     },
 }

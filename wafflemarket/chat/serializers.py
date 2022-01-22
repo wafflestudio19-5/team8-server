@@ -1,4 +1,3 @@
-from attr import field
 from rest_framework import serializers
 
 from user.serializers import UserSerializer
@@ -23,6 +22,7 @@ class ChatSerializer(serializers.ModelSerializer):
         return chat.sender == user
 
 
+# give info to list chatrooms
 class ChatRoomSerializer(serializers.ModelSerializer):
 
     roomname = serializers.SerializerMethodField(read_only=True)
@@ -35,14 +35,14 @@ class ChatRoomSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatRoom
         fields = (
-            'roomname',
-            'username',
-            'location',
-            'profile_image',
-            'article_id',
-            'product_image',
+            "roomname",
+            "username",
+            "location",
+            "profile_image",
+            "article_id",
+            "product_image",
         )
-        
+
     def get_roomname(self, chatroom):
         return chatroom.name
 
@@ -52,7 +52,7 @@ class ChatRoomSerializer(serializers.ModelSerializer):
             return chatroom.buyer.username
         else:
             return chatroom.seller.username
-    
+
     def get_location(self, chatroom):
         return LocationSerializer(chatroom.article.location).data
 
@@ -68,4 +68,6 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         return chatroom.article.id
 
     def get_product_image(self, chatroom):
-        return ArticleSerializer(chatroom.article, context=self.context).data.get("product_images")[0]
+        return ArticleSerializer(chatroom.article, context=self.context).data.get(
+            "product_images"
+        )[0]
