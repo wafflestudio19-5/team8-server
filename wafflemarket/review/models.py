@@ -28,9 +28,9 @@ class Review(models.Model):
     reviewyee = models.ForeignKey(User, related_name="review_about", on_delete=models.CASCADE)
 
     article = models.ForeignKey(Article, null=True, default=None, on_delete=models.CASCADE)
+    review_location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True)
     
-    review = models.CharField(max_length=255)
-    review_location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True) #null=False
+    review = models.CharField(max_length=255, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     manner_type = models.CharField(max_length=20, choices = MANNER_TYPE_CHOICES)

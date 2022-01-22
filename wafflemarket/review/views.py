@@ -8,7 +8,7 @@ from django.db import IntegrityError
 from django.shortcuts import render
 
 from .models import Review, Temparature
-from .serializers import ReviewArticleSerializer, ReviewArticleValidator
+from .serializers import ReviewArticleSerializer, ReviewArticleValidator, ReviewUserSerializer, ReviewUserValidator
 from user.models import User
 from article.models import Article
 
@@ -162,25 +162,100 @@ class ReviewArticleViewSet(viewsets.GenericViewSet):
                 ReviewArticleSerializer(review, context={"type" : "sent", "to_view" : ("received", received)}).data, status=status.HTTP_201_CREATED
                 )
     
-'''        
-class ReviewUserViewSet(viewsets.GenericViewSet):
+
+class ReviewUserView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = UserSerializer
-    queryset = User.objects.all()
+
+    def put(self, request, user_id, type):
+        if User.objects.filter(pk=user_id).exists():
+            reviewyee = User.objects.get(pk=user_id)
+        else:
+            return Response(
+                {"존재하지 않는 사용자입니다."}, status=status.HTTP_404_NOT_FOUND
+                )
+        reviewer = request.user
+        serializer = ReviewUserValidator(data=request.data, context={"manner_type" : type})
+        serializer.is_valid(raise_exception=True)
+        
+        if Review.objects.filter(review_type="user", reviewer=reviewer, reviewyee=reviewyee, manner_type=type).exists():
+            review = Review.objects.get(review_type="user", reviewer=reviewer, reviewyee=reviewyee, manner_type=type)
+            review = serializer.update_manner(review, request.data)
+            return Response(
+                ReviewUserSerializer(review).data, status=status.HTTP_200_OK
+                )
+        else:
+            review = Review(review_type="user", 
+                            reviewer=reviewer, 
+                            reviewyee=reviewyee,
+                            article=None, 
+                            review = None,
+                            review_location = None,
+                            manner_type = type,
+                            **serializer.validated_data
+                            )
+            review.save()
+            review = Review.objects.get(review_type="user", reviewer=reviewer, reviewyee=reviewyee, manner_type=type)
+            return Response(
+                ReviewUserSerializer(review).data, status=status.HTTP_201_CREATED
+                )
+       
+        
+    def get(self, request, user_id, type):
+        if User.objects.filter(pk=user_id).exists():
+            reviewyee = User.objects.get(pk=user_id)
+        else:
+            return Response(
+                {"존재하지 않는 사용자입니다."}, status=status.HTTP_404_NOT_FOUND
+                )
+        reviewer = request.user
+        if type=="good":
+            manner = "0"*3
+        elif type=="bad":
+            manner = "0"*2
+        else:
+            return Response(
+                {"매너칭찬, 비매너평가 중 하나를 선택해야 합니다."}, status-status.HTTP_400_BAD_REQUEST
+            )
+            
+        if Review.objects.filter(review_type="user", reviewer=reviewer, reviewyee=reviewyee, manner_type=type).exists():
+            review = Review.objects.get(review_type="user", reviewer=reviewer, reviewyee=reviewyee, manner_type=type)
+            return Response(
+                ReviewUserSerializer(review).data, status=status.HTTP_200_OK
+                )
+            
+        else:
+            review = Review(review_type="user", 
+                            reviewer=reviewer, 
+                            reviewyee=reviewyee,
+                            article=None, 
+                            review = None,
+                            review_location = None,
+                            manner_type=type,
+                            manner = manner
+                            )
+            review.save()
+            review = Review.objects.get(review_type="user", reviewer=reviewer, reviewyee=reviewyee, manner_type=type)
+            return Response(
+                ReviewUserSerializer(review).data, status=status.HTTP_201_CREATED
+                )
+    
+class ReviewViewSet(viewsets.GenericViewSet):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = ReviewUserSerializer
+    queryset = Review.objects.all()
     
     def retrieve(self, request, pk):
-    
-    @action(detail=True, methods=["POST", "PUT", "GET",]) #response: 보낸 후기 serializing
-    def manner(self, request, pk):
-        
+        if User.objects.filter(pk=pk).exists():
+            reviewyee = User.objects.get(pk=pk)
+        else:
+            Response(
+                {"존재하지 않는 사용자입니다."}, status=status.HTTP_404_NOT_FOUND
+                )
+   
+'''   
     @action(detail=True, methods=["GET",]) #response: 보낸 후기 serializing
     def review(self, request):
         
     @action(detail=True, methods=["GET",]) #response: 보낸 후기 serializing
     def review(self, request):
-        
-    @action(detail=True, methods=["POST",]) #response: 보낸 후기 serializing
-    def buyer(self, request, pk):
-        
-    @action(detail=True, methods=["GET", "DELETE",])
-    def sent(self, request, pk):'''
+    '''
