@@ -211,7 +211,6 @@ class ArticleViewSet(viewsets.GenericViewSet):
                     return Response(
                         data="올바른 카테고리를 지정해주세요.", status=status.HTTP_400_BAD_REQUEST
                     )
-
             # filter article by category
             articles = articles.filter(category__in=user_category_list)
         else:
@@ -233,6 +232,9 @@ class ArticleViewSet(viewsets.GenericViewSet):
             data={"page_id": page_id, "article_num": articles.count()}
         )
         serializer.is_valid(raise_exception=True)
+
+        if articles.count() == 0:
+            return Response(status=status.HTTP_200_OK)
 
         page_id = serializer.data.get("page_id")
         return Response(

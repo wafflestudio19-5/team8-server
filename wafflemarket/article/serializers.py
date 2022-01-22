@@ -219,7 +219,9 @@ class ArticlePaginationValidator(serializers.Serializer):
     def validate(self, data):
         page_id = data.get("page_id")
         article_num = data.get("article_num")
-        if article_num % 15:
+        if article_num == 0:
+            num_pages = 1
+        elif article_num % 15:
             num_pages = article_num / 15 + 1
         else:
             num_pages = article_num / 15

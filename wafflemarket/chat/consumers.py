@@ -1,9 +1,8 @@
 import json
+from urllib.parse import parse_qs
 from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.db import database_sync_to_async
 
-from django.contrib.auth.models import AnonymousUser
-
-from user.models import User
 from chat.models import Chat
 from chat.models import ChatRoom
 from chat.serializers import ChatSerializer
@@ -13,14 +12,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.roomname = self.scope['url_route']['kwargs']['roomname']
         self.room_group_name = 'chat_%s' % self.roomname
-        self.chatroom = ChatRoom.objects.get(name=self.roomname)
-        self.serializer = ChatSerializer
-        user_id = self.scope["query_string"].get("user_id")
-        latest_message = self.scope["query_string"].get("latest_message")
-        try:
-            self.user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            self.user = AnonymousUser()
+        self.chatroom = await self.get_chatroom(self.roomname)
+        self.user = self.scope["user"]
+        latest_message = parse_qs(self.scope["query_string"].decode()).get("latest_message")[0]
 
         # Join room group
         await self.channel_layer.group_add(
@@ -31,12 +25,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.accept()
         
         # send unread messages
-        if latest_message:
-            unread_messages = self.chatroom.chats.filter(id__gt=latest_message).order_by("id")
-            await self.send(text_data=json.dumps(
-                self.serializer(unread_messages, many=True, context={"user": self.user}).data
-            ))
-
+        unread_messages = await self.get_unread_messages(latest_message)
+        await self.send(text_data=json.dumps(
+            await self.get_json_messages(unread_messages, many=True)
+        ))
 
     async def disconnect(self, close_code):
         # Leave room group
@@ -49,22 +41,52 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         content = text_data_json['chat']
-        chat = Chat.objects.create(chatroom=self.chatroom, sender=self.user, content=content)
+        chat = await self.create_chat(content)
+        sender_id = await self.get_sender_id(chat)
 
         # Send message to room group
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'chat_message',
-                'chat': chat
+                'chat': await self.get_json_messages(chat),
+                'sender_id': sender_id,
             }
         )
 
     # Receive message from room group
     async def chat_message(self, event):
-        chat = event['chat']
+        chat = event["chat"]
+        chat["is_sender"] = await self.get_is_sender(event["sender_id"])
 
         # Send message to WebSocket
         await self.send(text_data=json.dumps(
-            [self.serializer(chat, context={"user": self.user}).data]
+            [chat]
         ))
+
+    @database_sync_to_async
+    def get_chatroom(self, roomname):
+        if ChatRoom.objects.filter(name=self.roomname).exists():
+            return ChatRoom.objects.get(name=self.roomname)
+        else:
+            return None
+
+    @database_sync_to_async
+    def get_unread_messages(self, latest_message=0):
+        return self.chatroom.chats.filter(id__gt=latest_message).order_by("id")
+
+    @database_sync_to_async
+    def get_json_messages(self, messages, many=False):
+        return ChatSerializer(messages, many=many, context={"user": self.user}).data
+
+    @database_sync_to_async
+    def create_chat(self, content):
+        return Chat.objects.create(chatroom=self.chatroom, sender=self.user, content=content)
+
+    @database_sync_to_async
+    def get_sender_id(self, chat):
+        return chat.sender.id
+
+    @database_sync_to_async
+    def get_is_sender(self, sender_id):
+        return sender_id == self.user.id

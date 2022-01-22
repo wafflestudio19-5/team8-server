@@ -25,13 +25,13 @@ class ChatRoomViewSet(viewsets.GenericViewSet):
             chatroom = self.queryset.get(name=room_name)
         else:
             chatroom = ChatRoom.objects.create(name=room_name, article=article, seller=article.seller, buyer=user)
-        return Response(self.get_serializer(chatroom).data, status=status.HTTP_201_CREATED)
+        return Response(ChatRoomSerializer(chatroom, context={"user": user}).data, status=status.HTTP_201_CREATED)
 
     # show all chatrooms of user
     def list(self, request):
         user = request.user
         chatrooms = self.queryset.filter(Q(seller=user)|Q(buyer=user))
-        return Response(self.get_serializer(chatrooms, many=True).data, status=status.HTTP_200_OK)
+        return Response(ChatRoomSerializer(chatrooms, many=True, context={"user": user}).data, status=status.HTTP_200_OK)
 
     # show chatrooms which belongs to pk-th article
     def retrieve(self, request, pk=None):
@@ -42,11 +42,12 @@ class ChatRoomViewSet(viewsets.GenericViewSet):
                 "해당하는 상품이 존재하지 않습니다.", status=status.HTTP_404_NOT_FOUND
             )
 
+        user = request.user
         article = Article.objects.get(id=pk)
-        if article.seller != request.user:
+        if article.seller != user:
             return Response(
                 "해당 유저의 상품이 아닙니다.", status=status.HTTP_403_FORBIDDEN
             )
         return Response(
-            self.get_serializer(article.chatrooms, many=True).data, status=status.HTTP_200_OK
+            ChatRoomSerializer(article.chatrooms, many=True, context={"user": user}).data, status=status.HTTP_200_OK
         )

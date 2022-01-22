@@ -2,6 +2,7 @@ from attr import field
 from rest_framework import serializers
 
 from user.serializers import UserSerializer
+from location.serializers import LocationSerializer
 from article.serializers import ArticleSerializer
 from chat.models import Chat, ChatRoom
 
@@ -53,7 +54,7 @@ class ChatRoomSerializer(serializers.ModelSerializer):
             return chatroom.seller.username
     
     def get_location(self, chatroom):
-        return chatroom.article.location
+        return LocationSerializer(chatroom.article.location).data
 
     def get_profile_image(self, chatroom):
         user = self.context["user"]
@@ -67,4 +68,4 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         return chatroom.article.id
 
     def get_product_image(self, chatroom):
-        return ArticleSerializer(chatroom.article).data.get("product_images")[0]
+        return ArticleSerializer(chatroom.article, context=self.context).data.get("product_images")[0]
