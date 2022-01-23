@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from django.db.models import Q
 
 from .models import Review
-from .serializers import ReviewArticleSerializer, ReviewArticleValidator, ReviewUserSerializer, ReviewUserValidator, ReviewSerializer, UserReviewSerializer
+from .serializers import ReviewArticleSerializer, ReviewArticleValidator, ReviewUserSerializer, ReviewUserValidator, ReviewSerializer, MannerSerializer, UserReviewSerializer
 from user.models import User
 from article.models import Article
 
@@ -118,7 +118,7 @@ class ReviewArticleViewSet(viewsets.GenericViewSet):
         review.save()
         received = Review.objects.filter(article=article, reviewyee=request.user).exists()
         return Response(
-                ReviewArticleSerializer(review, context={"type" : "sent", "to_view" : ("received", received)}).data, {"success" : True}, status=status.HTTP_201_CREATED
+                ReviewArticleSerializer(review, context={"type" : "sent", "to_view" : ("received", received)}).data, status=status.HTTP_201_CREATED
                 )
         
         
@@ -242,32 +242,6 @@ class ReviewViewSet(viewsets.GenericViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = ReviewUserSerializer
     queryset = Review.objects.all()
-    
-    code_good_manner = {
-            0 : "친절하고 매너가 좋아요.",
-            1 : "시간 약속을 잘 지켜요.",
-            2 : "응답이 빨라요.",
-            
-            3 : "상품상태가 설명한 것과 같아요.",
-            4 : "나눔을 해주셨어요.",
-            5 : "상품설명이 자세해요.",
-            6 : "좋은 상품을 저렴하게 판매해요.",
-            
-            7 :"제가 있는 곳까지 와서 거래했어요.",
-    }
-    
-    good_manner_cnt = {
-            "친절하고 매너가 좋아요." : set(),
-            "시간 약속을 잘 지켜요." : set(),
-            "응답이 빨라요." : set(),
-            
-            "상품상태가 설명한 것과 같아요." : set(),
-            "나눔을 해주셨어요." : set(),
-            "상품설명이 자세해요." : set(),
-            "좋은 상품을 저렴하게 판매해요." : set(),
-            
-            "제가 있는 곳까지 와서 거래했어요." : set(),
-        } 
 
     @action(detail=True, methods=["GET",])
     def review(self, request, pk):
@@ -284,22 +258,12 @@ class ReviewViewSet(viewsets.GenericViewSet):
     @action(detail=True, methods=["GET",])
     def manner(self, request, pk):
         if User.objects.filter(pk=pk).exists():
-            reviewyee = User.objects.get(pk=pk)
+            user = User.objects.get(pk=pk)
         else:
-            return Response(
+            Response(
                 {"존재하지 않는 사용자입니다."}, status=status.HTTP_404_NOT_FOUND
                 )
-        
-        reviews = Review.objects.filter(reviewyee=reviewyee, manner_type="good").all()
-        for review in reviews:
-            manner = review.manner
-            reviewer = review.reviewer
-            for i, v in enumerate(manner):
-                if v=="1":
-                    self.good_manner_cnt[self.code_good_manner[i]].add(reviewer)
-        for manner in self.good_manner_cnt:
-            self.good_manner_cnt[manner] = len(self.good_manner_cnt[manner])
-        return Response(self.good_manner_cnt, status=status.HTTP_200_OK)
+        return Response(MannerSerializer(user).data, status=status.HTTP_200_OK)
     
     
     def retrieve(self, request, pk):

@@ -251,12 +251,75 @@ class ReviewSerializer(serializers.ModelSerializer):
             "reviewer",
             "review_location",
             "review",
+            "review_type",
         )
     
     def get_reviewer(self, review):
         return UserSimpleSerializer(review.reviewer).data
     def get_review_location(self, review):
         return LocationSerializer(review.review_location).data
+    
+    
+class MannerSerializer(serializers.ModelSerializer):
+    manner = serializers.SerializerMethodField()
+    
+    code_good_manner = {
+            0 : "친절하고 매너가 좋아요.",
+            1 : "시간 약속을 잘 지켜요.",
+            2 : "응답이 빨라요.",
+            
+            3 : "상품상태가 설명한 것과 같아요.",
+            4 : "나눔을 해주셨어요.",
+            5 : "상품설명이 자세해요.",
+            6 : "좋은 상품을 저렴하게 판매해요.",
+            
+            7 :"제가 있는 곳까지 와서 거래했어요.",
+    }
+    
+    good_manner_list = [
+            "친절하고 매너가 좋아요.",
+            "시간 약속을 잘 지켜요.",
+            "응답이 빨라요.",
+            
+            "상품상태가 설명한 것과 같아요.",
+            "나눔을 해주셨어요.",
+            "상품설명이 자세해요.",
+            "좋은 상품을 저렴하게 판매해요.",
+            
+            "제가 있는 곳까지 와서 거래했어요.",
+    ]
+
+    class Meta:
+        model = User
+        fields = (
+            "manner",
+        )
+    
+    def get_manner(self, user):
+        reviewyee = user
+        good_manner_cnt = {
+            "친절하고 매너가 좋아요." : set(),
+            "시간 약속을 잘 지켜요." : set(),
+            "응답이 빨라요." : set(),
+            
+            "상품상태가 설명한 것과 같아요." : set(),
+            "나눔을 해주셨어요." : set(),
+            "상품설명이 자세해요." : set(),
+            "좋은 상품을 저렴하게 판매해요." : set(),
+            
+            "제가 있는 곳까지 와서 거래했어요." : set(),
+        } 
+        
+        reviews = Review.objects.filter(reviewyee=reviewyee, manner_type="good").all()
+        for review in reviews:
+            manner = review.manner
+            reviewer = review.reviewer
+            for i, v in enumerate(manner):
+                if v=="1":
+                    good_manner_cnt[self.code_good_manner[i]].add(reviewer)
+        for manner in self.good_manner_list:
+            good_manner_cnt[manner] = len(good_manner_cnt[manner])
+        return good_manner_cnt
     
     
 class UserReviewSerializer(serializers.ModelSerializer):
@@ -276,20 +339,19 @@ class UserReviewSerializer(serializers.ModelSerializer):
             7 :"제가 있는 곳까지 와서 거래했어요.",
     }
     
-    good_manner_cnt = {
-            "친절하고 매너가 좋아요." : set(),
-            "시간 약속을 잘 지켜요." : set(),
-            "응답이 빨라요." : set(),
+    good_manner_list = [
+            "친절하고 매너가 좋아요.",
+            "시간 약속을 잘 지켜요.",
+            "응답이 빨라요.",
             
-            "상품상태가 설명한 것과 같아요." : set(),
-            "나눔을 해주셨어요." : set(),
-            "상품설명이 자세해요." : set(),
-            "좋은 상품을 저렴하게 판매해요." : set(),
+            "상품상태가 설명한 것과 같아요.",
+            "나눔을 해주셨어요.",
+            "상품설명이 자세해요.",
+            "좋은 상품을 저렴하게 판매해요.",
             
-            "제가 있는 곳까지 와서 거래했어요." : set(),
-        } 
+            "제가 있는 곳까지 와서 거래했어요.",
+    ]
 
-    
     class Meta:
         model = User
         fields = (
@@ -301,15 +363,29 @@ class UserReviewSerializer(serializers.ModelSerializer):
         reviewyee = user
         reviews = Review.objects.filter(Q(review_type="seller") | Q(review_type="buyer"), reviewyee=reviewyee)
         return ReviewSerializer(reviews, many=True).data
+    
     def get_manner(self, user):
         reviewyee = user
+        good_manner_cnt = {
+            "친절하고 매너가 좋아요." : set(),
+            "시간 약속을 잘 지켜요." : set(),
+            "응답이 빨라요." : set(),
+            
+            "상품상태가 설명한 것과 같아요." : set(),
+            "나눔을 해주셨어요." : set(),
+            "상품설명이 자세해요." : set(),
+            "좋은 상품을 저렴하게 판매해요." : set(),
+            
+            "제가 있는 곳까지 와서 거래했어요." : set(),
+        } 
+        
         reviews = Review.objects.filter(reviewyee=reviewyee, manner_type="good").all()
         for review in reviews:
             manner = review.manner
             reviewer = review.reviewer
             for i, v in enumerate(manner):
                 if v=="1":
-                    self.good_manner_cnt[self.code_good_manner[i]].add(reviewer)
-        for manner in self.good_manner_cnt:
-            self.good_manner_cnt[manner] = len(self.good_manner_cnt[manner])
-        return self.good_manner_cnt
+                    good_manner_cnt[self.code_good_manner[i]].add(reviewer)
+        for manner in self.good_manner_list:
+            good_manner_cnt[manner] = len(good_manner_cnt[manner])
+        return good_manner_cnt
