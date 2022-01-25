@@ -27,7 +27,7 @@ class ReviewArticleViewSet(viewsets.GenericViewSet):
                 )
         if request.user not in [article.seller, article.buyer]:
             return Response(
-                {"해당 게시글과 관련된 사용자가 아닙니다."}, status=status.HTTP_403_FORBIDDEN
+                {"해당 게시글의 판매자 혹은 구매자만이 후기를 조회 혹은 삭제할 수 있습니다."}, status=status.HTTP_403_FORBIDDEN
                 )
             
         if self.request.method == "GET":
@@ -39,7 +39,7 @@ class ReviewArticleViewSet(viewsets.GenericViewSet):
                     )
             else:
                 return Response(
-                    {"리뷰를 조회 혹은 삭제할 수 없습니다."}, status=status.HTTP_403_FORBIDDEN
+                    {"후기가 존재하지 않습니다."}, status=status.HTTP_404_NOT_FOUND
                     )
 
         if self.request.method == "DELETE":
@@ -51,9 +51,9 @@ class ReviewArticleViewSet(viewsets.GenericViewSet):
                     )
             else:
                 return Response(
-                    {"리뷰를 조회 혹은 삭제할 수 없습니다."}, status=status.HTTP_403_FORBIDDEN
+                    {"후기가 존재하지 않습니다."}, status=status.HTTP_404_NOT_FOUND
                     )
-        
+                
     @action(detail=True, methods=["GET",])
     def received(self, request, pk):
         if Article.objects.filter(pk=pk).exists():
@@ -62,6 +62,10 @@ class ReviewArticleViewSet(viewsets.GenericViewSet):
             return Response(
                 {"존재하지 않는 게시글입니다."}, status=status.HTTP_404_NOT_FOUND
                 )
+        if request.user not in [article.seller, article.buyer]:
+            return Response(
+                        {"해당 게시글의 판매자 혹은 구매자만이 후기를 조회할 수 있습니다."}, status=status.HTTP_403_FORBIDDEN
+                        )
             
         if self.request.method == "GET":
             if Review.objects.filter(article=article, reviewyee=request.user).exists():
@@ -69,17 +73,14 @@ class ReviewArticleViewSet(viewsets.GenericViewSet):
                     review = Review.objects.get(article=article, reviewer=article.buyer, reviewyee=request.user)
                 elif(article.buyer==request.user):
                     review = Review.objects.get(article=article, reviewer=article.seller, reviewyee=request.user)
-                else:
-                    return Response(
-                        {"해당 게시글과 관련된 사용자가 아닙니다."}, status=status.HTTP_403_FORBIDDEN
-                        )
+
                 sent = Review.objects.filter(article=article, reviewer=request.user).exists()
                 return Response(
                     ReviewArticleSerializer(review, context={"type" : "received", "to_view" : ("sent", sent)}).data, status=status.HTTP_200_OK
                     )
             else:
                 return Response(
-                    {"리뷰를 조회 혹은 삭제할 수 없습니다."}, status=status.HTTP_403_FORBIDDEN
+                    {"후기가 존재하지 않습니다."}, status=status.HTTP_404_NOT_FOUND
                     )
                 
     @action(detail=True, methods=["POST",])
@@ -105,13 +106,13 @@ class ReviewArticleViewSet(viewsets.GenericViewSet):
         else:
             review_location = None
             
-        serializer = ReviewArticleValidator(data=request.data)
+        serializer = ReviewArticleValidator(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         
-        review = Review(review_type="seller", 
-                        reviewer=article.seller, 
+        review = Review(review_type="seller",
+                        reviewer=article.seller,
                         reviewyee=article.buyer,
-                        article=article, 
+                        article=article,
                         review_location = review_location,
                         **serializer.validated_data
                         )
@@ -145,7 +146,7 @@ class ReviewArticleViewSet(viewsets.GenericViewSet):
         else:
             review_location = None
             
-        serializer = ReviewArticleValidator(data=request.data)
+        serializer = ReviewArticleValidator(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         
         review = Review(review_type="buyer", 
@@ -247,30 +248,42 @@ class ReviewViewSet(viewsets.GenericViewSet):
     def review(self, request, pk):
         if User.objects.filter(pk=pk).exists():
             reviewyee = User.objects.get(pk=pk)
+            reviews = Review.objects.filter(
+                Q(review_type="seller") | Q(review_type="buyer"), 
+                reviewyee=reviewyee,
+                )
+            return Response(
+                ReviewSerializer(reviews, many=True).data, 
+                status=status.HTTP_200_OK,
+                )
         else:
             return Response(
                 {"존재하지 않는 사용자입니다."}, status=status.HTTP_404_NOT_FOUND
                 )
-        reviews = Review.objects.filter(Q(review_type="seller") | Q(review_type="buyer"), reviewyee=reviewyee)
-        return Response(ReviewSerializer(reviews, many=True).data, status=status.HTTP_200_OK)
     
     
     @action(detail=True, methods=["GET",])
     def manner(self, request, pk):
         if User.objects.filter(pk=pk).exists():
             user = User.objects.get(pk=pk)
+            return Response(
+                MannerSerializer(user).data, 
+                status=status.HTTP_200_OK,
+                )
         else:
-            Response(
+            return Response(
                 {"존재하지 않는 사용자입니다."}, status=status.HTTP_404_NOT_FOUND
                 )
-        return Response(MannerSerializer(user).data, status=status.HTTP_200_OK)
-    
     
     def retrieve(self, request, pk):
         if User.objects.filter(pk=pk).exists():
             user = User.objects.get(pk=pk)
-        else:
-            Response(
-                {"존재하지 않는 사용자입니다."}, status=status.HTTP_404_NOT_FOUND
+            return Response(
+                UserReviewSerializer(user).data, 
+                status=status.HTTP_200_OK,
                 )
-        return Response(UserReviewSerializer(user).data, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {"존재하지 않는 사용자입니다."}, 
+                status=status.HTTP_404_NOT_FOUND,
+                )

@@ -9,9 +9,9 @@ from location.serializers import LocationSerializer
 from user.serializers import UserSimpleSerializer
 
 class ReviewArticleValidator(serializers.Serializer):
-    review = serializers.CharField()
-    manner_type = serializers.CharField()
-    manner_list = serializers.ListField(child=serializers.CharField())
+    review = serializers.CharField(required=False)
+    manner_type = serializers.CharField(required=True)
+    manner_list = serializers.ListField(child=serializers.CharField(), required=True)
     
     good_manner_code = {
             "친절하고 매너가 좋아요." : 0,
@@ -45,6 +45,9 @@ class ReviewArticleValidator(serializers.Serializer):
     
     @classmethod
     def create_manner_string(cls, manner_type, manner_list):
+        if manner_list is None:
+            raise serializers.ValidationError("매너평가를 입력해주세요.")
+        
         if manner_type=="good":
             try:
                 manner = ["0"]*8
@@ -65,7 +68,7 @@ class ReviewArticleValidator(serializers.Serializer):
         return manner
     
     def validate(self, data):
-        review = data.get("review")
+        review = data.get("review", None)
         manner_type = data.get("manner_type")
         manner_list = data.get("manner_list")
         return {"review" : review,
@@ -151,6 +154,9 @@ class ReviewUserValidator(serializers.Serializer):
     
     @classmethod
     def create_manner_string(cls, manner_type, manner_list):
+        if manner_list is None:
+            raise serializers.ValidationError("매너평가를 입력해주세요.")
+        
         if manner_type=="good":
             try:
                 manner = ["0"]*3
