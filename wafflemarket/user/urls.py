@@ -11,6 +11,7 @@ from user.views import (
     UserAuthView,
     UserCategoryView,
     UserLikedView,
+    UserHistoryView,
 )
 
 app_name = "user"
@@ -31,6 +32,9 @@ urlpatterns = [
     path(
         "user/category/", UserCategoryView.as_view(), name="category"
     ),  # /api/v1/user/interest/
+    path(
+        "user/history/<int:pk>/", UserHistoryView.as_view(), name="history"
+    ), # /api/v1/user/history/{id} (구매내역 : 1, 판매내역 : 2)
     path("user/liked/", UserLikedView.as_view(), name="liked"),  # /api/v1/user/likes/
     path("", include(router.urls)),
 ]
