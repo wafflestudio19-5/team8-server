@@ -104,7 +104,7 @@ WSGI_APPLICATION = "wafflemarket.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-'''DATABASES = {
+DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
         "HOST": "localhost" if os.getenv("DB_HOST") is None else os.getenv("DB_HOST"),
@@ -113,13 +113,7 @@ WSGI_APPLICATION = "wafflemarket.wsgi.application"
         "USER": "wafflemarket-backend",
         "PASSWORD": "team8_wafflemarket_backend",
     }
-}'''
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME'  : os.path.join(BASE_DIR, 'db.sqlite3'),}}
-
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -206,14 +200,9 @@ SWAGGER_SETTINGS = {
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 AWS_S3_SECURE_URLS = True
 
-'''AWS_S3_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_S3_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_S3_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_S3_BUCKET")'''
-
-
-AWS_S3_ACCESS_KEY_ID='AKIA3CSQ72OB3Z3KT37Q'
-AWS_S3_SECRET_ACCESS_KEY='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'
-AWS_STORAGE_BUCKET_NAME='wafflemarket'
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_S3_BUCKET")
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 105000000
 FILE_UPLOAD_MAX_MEMORY_SIZE = 105000000
