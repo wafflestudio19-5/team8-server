@@ -7,7 +7,15 @@ from rest_framework.views import APIView
 from django.db.models import Q
 
 from .models import Review
-from .serializers import ReviewArticleSerializer, ReviewArticleValidator, ReviewUserSerializer, ReviewUserValidator, ReviewSerializer, MannerSerializer, UserReviewSerializer
+from .serializers import ( 
+    ReviewArticleSerializer,    
+    ReviewArticleValidator, 
+    ReviewUserSerializer, 
+    ReviewUserValidator, 
+    ReviewSerializer, 
+    MannerSerializer, 
+    UserReviewSerializer, 
+    )
 from user.models import User
 from article.models import Article
 
@@ -267,7 +275,7 @@ class ReviewViewSet(viewsets.GenericViewSet):
         if User.objects.filter(pk=pk).exists():
             user = User.objects.get(pk=pk)
             return Response(
-                MannerSerializer(user).data, 
+                MannerSerializer(user).data,
                 status=status.HTTP_200_OK,
                 )
         else:
@@ -279,7 +287,7 @@ class ReviewViewSet(viewsets.GenericViewSet):
         if User.objects.filter(pk=pk).exists():
             user = User.objects.get(pk=pk)
             return Response(
-                UserReviewSerializer(user).data, 
+                UserReviewSerializer(user).data,
                 status=status.HTTP_200_OK,
                 )
         else:
