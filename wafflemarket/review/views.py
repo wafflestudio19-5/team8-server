@@ -13,12 +13,10 @@ from .serializers import (
     ReviewUserSerializer, 
     ReviewUserValidator, 
     ReviewSerializer, 
-    )
-from user.models import User
-from user.serializers import (
     UserMannerSerializer, 
     UserReviewSerializer, 
-)
+    )
+from user.models import User
 from article.models import Article
 
 
