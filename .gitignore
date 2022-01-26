@@ -134,3 +134,10 @@ dmypy.json
 
 # Web static file
 static/
+
+# social login test file
+logintest.html
+
+# chat test html file
+index.html
+room.html
