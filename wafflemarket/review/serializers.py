@@ -43,6 +43,7 @@ class ReviewArticleValidator(serializers.Serializer):
             "약속 장소에 나타나지 않았어요." : 14,
         }
     
+    # convert manner list to string
     @classmethod
     def create_manner_string(cls, manner_type, manner_list):
         if manner_list is None:
@@ -93,7 +94,9 @@ class ReviewArticleSerializer(serializers.ModelSerializer):
             "to_view",
         )
     
-    def get_evaluation(self, review):
+    # convert manner string to list
+    @classmethod
+    def get_evaluation(cls, review):
         code_good_manner = {
             0 : "친절하고 매너가 좋아요.",
             1 : "시간 약속을 잘 지켜요.",
@@ -160,6 +163,7 @@ class ReviewUserValidator(serializers.Serializer):
             "불친절해요." : 1,
         }
     
+    # convert manner list to string
     @classmethod
     def create_manner_string(cls, manner_type, manner_list):
         if manner_list is None:
@@ -187,6 +191,7 @@ class ReviewUserValidator(serializers.Serializer):
         manner = "".join(manner)
         return manner
     
+    # update manner string
     @classmethod
     def update_manner_string(cls, manner_type, manner, manner_list):
         if manner_list is None:
@@ -222,6 +227,7 @@ class ReviewUserValidator(serializers.Serializer):
         manner_list = data.get("manner_list")
         return {"manner" : self.create_manner_string(manner_type, manner_list)}
     
+    # update manner
     def update_manner(self, review, data):
         manner_type = review.manner_type
         manner = review.manner
@@ -253,6 +259,7 @@ class ReviewUserSerializer(serializers.ModelSerializer):
             1 : "불친절해요.",
         }
         
+        # get manner evaluation as a list
         manner_list = []
         manner = review.manner
         
@@ -337,6 +344,8 @@ class UserMannerSerializer(serializers.ModelSerializer):
             
             "제가 있는 곳까지 와서 거래했어요." : set(),
         }
+        
+        # get manner evaluation and the number of users who sent it, which specific user received
         
         reviews = Review.objects.filter(reviewyee=reviewyee, manner_type="good").all()
         

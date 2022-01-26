@@ -24,7 +24,8 @@ class ReviewArticleViewSet(viewsets.GenericViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = ReviewArticleSerializer
     queryset = Review.objects.all()
-        
+    
+    # get or delete  review(article review) which logined user sent [GET] [DELETE]
     @action(detail=True, methods=["GET", "DELETE",])
     def sent(self, request, pk):
         
@@ -38,7 +39,8 @@ class ReviewArticleViewSet(viewsets.GenericViewSet):
                 {"해당 게시글의 판매자 혹은 구매자만이 후기를 조회 혹은 삭제할 수 있습니다."}, 
                 status=status.HTTP_403_FORBIDDEN,
                 )
-            
+        
+        # get review(article review) which logined user sent
         if self.request.method == "GET":
             if Review.objects.filter(article=article, reviewer=request.user).exists():
                 review = Review.objects.get(article=article, reviewer=request.user)
@@ -49,7 +51,8 @@ class ReviewArticleViewSet(viewsets.GenericViewSet):
                     )
             else:
                 return Response({"후기가 존재하지 않습니다."}, status=status.HTTP_404_NOT_FOUND)
-
+            
+        # delete  review(article review) which logined user sent
         if self.request.method == "DELETE":
             if Review.objects.filter(article=article, reviewer=request.user).exists():
                 review = Review.objects.get(article=article, reviewer=request.user)
@@ -57,7 +60,9 @@ class ReviewArticleViewSet(viewsets.GenericViewSet):
                 return Response({"deleted" : True}, status=status.HTTP_200_OK)
             else:
                 return Response({"후기가 존재하지 않습니다."}, status=status.HTTP_404_NOT_FOUND)
-                
+    
+    
+    # get or delete  review(article review) which logined user received [GET] [DELETE]
     @action(detail=True, methods=["GET",])
     def received(self, request, pk):
         
@@ -71,7 +76,8 @@ class ReviewArticleViewSet(viewsets.GenericViewSet):
                 {"해당 게시글의 판매자 혹은 구매자만이 후기를 조회할 수 있습니다."}, 
                 status=status.HTTP_403_FORBIDDEN,
                 )
-            
+        
+        # get review(article review) which logined user received
         if self.request.method == "GET":
             if Review.objects.filter(article=article, reviewyee=request.user).exists():
                 if(article.seller==request.user):
@@ -86,7 +92,9 @@ class ReviewArticleViewSet(viewsets.GenericViewSet):
                     )
             else:
                 return Response({"후기가 존재하지 않습니다."}, status=status.HTTP_404_NOT_FOUND)
-                
+    
+    
+    # create review(article review) as a seller [POST]
     @action(detail=True, methods=["POST",])
     def seller(self, request, pk):
         
@@ -125,7 +133,8 @@ class ReviewArticleViewSet(viewsets.GenericViewSet):
                 status=status.HTTP_201_CREATED,
                 )
         
-        
+    
+    # create review(article review) as a buyer [POST]
     @action(detail=True, methods=["POST",]) 
     def buyer(self, request, pk):
         
@@ -167,7 +176,8 @@ class ReviewArticleViewSet(viewsets.GenericViewSet):
 
 class ReviewUserView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
-
+    
+    # create or update review(user review)
     def put(self, request, user_id, type):
         if User.objects.filter(pk=user_id).exists():
             reviewyee = User.objects.get(pk=user_id)
@@ -180,11 +190,15 @@ class ReviewUserView(APIView):
         serializer.is_valid(raise_exception=True)
         
         reviewer = request.user
+        
         if Review.objects.filter(review_type="user", reviewer=reviewer, reviewyee=reviewyee, manner_type=type).exists():
+            # update review(user review)
             review = Review.objects.get(review_type="user", reviewer=reviewer, reviewyee=reviewyee, manner_type=type)
             review = serializer.update_manner(review, request.data)
             return Response(ReviewUserSerializer(review).data, status=status.HTTP_200_OK)
+        
         else:
+            # create review(user review)
             review = Review(review_type="user", 
                             reviewer=reviewer, 
                             reviewyee=reviewyee,
@@ -199,7 +213,8 @@ class ReviewUserView(APIView):
             review = Review.objects.get(review_type="user", reviewer=reviewer, reviewyee=reviewyee, manner_type=type)
             return Response(ReviewUserSerializer(review).data, status=status.HTTP_201_CREATED)
        
-        
+    
+    # get review(user review) or create empty review(user review)
     def get(self, request, user_id, type):
         
         if User.objects.filter(pk=user_id).exists():
@@ -215,10 +230,13 @@ class ReviewUserView(APIView):
             return Response({"매너칭찬, 비매너평가 중 하나를 선택해야 합니다."}, status-status.HTTP_400_BAD_REQUEST)
         
         reviewer = request.user
+        
         if Review.objects.filter(review_type="user", reviewer=reviewer, reviewyee=reviewyee, manner_type=type).exists():
+            # get review(user review)
             review = Review.objects.get(review_type="user", reviewer=reviewer, reviewyee=reviewyee, manner_type=type)
             return Response(ReviewUserSerializer(review).data, status=status.HTTP_200_OK)
         else:
+            # create empty review(user review)
             review = Review(review_type="user", 
                             reviewer=reviewer, 
                             reviewyee=reviewyee,
@@ -237,7 +255,8 @@ class ReviewViewSet(viewsets.GenericViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = ReviewUserSerializer
     queryset = Review.objects.all()
-
+    
+    # get reviews which specific user received
     @action(detail=True, methods=["GET",])
     def review(self, request, pk):
         if User.objects.filter(pk=pk).exists():
@@ -247,7 +266,7 @@ class ReviewViewSet(viewsets.GenericViewSet):
         else:
             return Response({"존재하지 않는 사용자입니다."}, status=status.HTTP_404_NOT_FOUND)
     
-    
+    # get manner evaluations which specific user received
     @action(detail=True, methods=["GET",])
     def manner(self, request, pk):
         if User.objects.filter(pk=pk).exists():
@@ -256,7 +275,7 @@ class ReviewViewSet(viewsets.GenericViewSet):
         else:
             return Response({"존재하지 않는 사용자입니다."}, status=status.HTTP_404_NOT_FOUND)
     
-    
+    # get review and manner evaluations which specific user received
     def retrieve(self, request, pk):
         if User.objects.filter(pk=pk).exists():
             user = User.objects.get(pk=pk)
