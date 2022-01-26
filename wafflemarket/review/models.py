@@ -37,26 +37,6 @@ class Review(models.Model):
 class Temparature(models.Model): 
     user = models.OneToOneField(User, related_name="tempfield", on_delete=models.CASCADE)
     temparature = models.FloatField(default=36.5)
-    #viewed_at = models.DateTimeField(null=True)
-    
-    '''
-    def update_is_valid(self):
-        if self.viewed_at is not None:
-            now = timezone.now().isocalendar()
-            now_year = now[0]
-            now_week = now[1]
-            
-            last_view = self.viewed_at.isocalendar()
-            last_view_year = last_view[0]
-            last_view_week = last_view[1]
-            
-            different_week = now_week!=last_view_week
-            different_year = now_week==last_view_week and now_year!=last_view_year
-            
-            return different_week or different_year
-        else:
-            return True
-    '''
     
     @classmethod
     def manner_score(cls, reviews):
