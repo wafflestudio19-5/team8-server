@@ -1,7 +1,5 @@
 from rest_framework import serializers
 
-from django.db.models import Q
-
 from user.models import User
 from review.models import Review
 from location.models import Location
@@ -55,6 +53,7 @@ class ReviewArticleValidator(serializers.Serializer):
                     manner[cls.good_manner_code[i]]="1"
             except KeyError:
                 raise serializers.ValidationError("올바른 평가를 입력해주세요.")
+            
         elif manner_type=="bad":
             try:
                 manner = ["0"]*15
@@ -62,8 +61,10 @@ class ReviewArticleValidator(serializers.Serializer):
                     manner[cls.bad_manner_code[i]]="1"
             except KeyError:
                 raise serializers.ValidationError("올바른 평가를 입력해주세요.")
+            
         else:
             raise serializers.ValidationError("매너칭찬, 비매너평가 중 하나를 선택해야 합니다.")
+        
         manner = "".join(manner)
         return manner
     
@@ -120,16 +121,20 @@ class ReviewArticleSerializer(serializers.ModelSerializer):
             13 : "거래 시간과 장소를 정한 후 연락이 안돼요.",
             14 : "약속 장소에 나타나지 않았어요."
         }
+        
         manner_list = []
         manner = review.manner
+        
         if review.manner_type=="good":
             for i, v in enumerate(manner):
                 if v == "1":
                     manner_list.append(code_good_manner[i])
+                    
         elif review.manner_type=="bad":
             for i, v in enumerate(manner):
                 if v == "1":
                     manner_list.append(code_bad_manner[i])
+                    
         return manner_list
     
     def get_type(self, review):
@@ -147,6 +152,7 @@ class ReviewUserValidator(serializers.Serializer):
             "시간 약속을 잘 지켜요." : 1,
             "응답이 빨라요." : 2,
         } 
+    
     bad_manner_code = {
             "반말을 사용해요." : 0,
             "불친절해요." : 1,
@@ -164,6 +170,7 @@ class ReviewUserValidator(serializers.Serializer):
                     manner[cls.good_manner_code[i]]="1"
             except KeyError:
                 raise serializers.ValidationError("올바른 평가를 입력해주세요.")
+            
         elif manner_type=="bad":
             try:
                 manner = ["0"]*2
@@ -171,14 +178,19 @@ class ReviewUserValidator(serializers.Serializer):
                     manner[cls.bad_manner_code[i]]="1"
             except KeyError:
                 raise serializers.ValidationError("올바른 평가를 입력해주세요.")
+            
         else:
             raise serializers.ValidationError("매너칭찬, 비매너평가 중 하나를 선택해야 합니다.")
+        
         manner = "".join(manner)
         return manner
     
     @classmethod
     def update_manner_string(cls, manner_type, manner, manner_list):
+        if manner_list is None:
+            raise serializers.ValidationError("매너평가를 입력해주세요.")
         manner = list(manner)
+        
         if manner_type=="good":
             for i in range(0, 3):
                 manner[i]="0"
@@ -187,6 +199,7 @@ class ReviewUserValidator(serializers.Serializer):
                     manner[cls.good_manner_code[i]]="1"
             except KeyError:
                 raise serializers.ValidationError("올바른 평가를 입력해주세요.")
+            
         elif manner_type=="bad":
             for i in range(0, 2):
                 manner[i]="0"
@@ -195,8 +208,10 @@ class ReviewUserValidator(serializers.Serializer):
                     manner[cls.bad_manner_code[i]]="1"
             except KeyError:
                 raise serializers.ValidationError("올바른 평가를 입력해주세요.")
+            
         else:
             raise serializers.ValidationError("매너칭찬, 비매너평가 중 하나를 선택해야 합니다.")
+        
         manner = "".join(manner)
         return manner
     
@@ -210,6 +225,7 @@ class ReviewUserValidator(serializers.Serializer):
         manner = review.manner
         manner_list = data.get("manner_list")
         manner = self.update_manner_string(manner_type, manner, manner_list)
+        
         review.manner = manner
         review.save()
         return review
@@ -234,16 +250,20 @@ class ReviewUserSerializer(serializers.ModelSerializer):
             0 : "반말을 사용해요.",
             1 : "불친절해요.",
         }
+        
         manner_list = []
         manner = review.manner
+        
         if review.manner_type=="good":
             for i, v in enumerate(manner[0:3]):
                 if v == "1":
                     manner_list.append(code_good_manner[i])
+                    
         elif review.manner_type=="bad":
             for i, v in enumerate(manner[0:2]):
                 if v == "1":
                     manner_list.append(code_bad_manner[i])
+                    
         return manner_list
     
     
@@ -264,134 +284,3 @@ class ReviewSerializer(serializers.ModelSerializer):
         return UserSimpleSerializer(review.reviewer).data
     def get_review_location(self, review):
         return LocationSerializer(review.review_location).data
-    
-    
-class MannerSerializer(serializers.ModelSerializer):
-    manner = serializers.SerializerMethodField()
-    
-    code_good_manner = {
-            0 : "친절하고 매너가 좋아요.",
-            1 : "시간 약속을 잘 지켜요.",
-            2 : "응답이 빨라요.",
-            
-            3 : "상품상태가 설명한 것과 같아요.",
-            4 : "나눔을 해주셨어요.",
-            5 : "상품설명이 자세해요.",
-            6 : "좋은 상품을 저렴하게 판매해요.",
-            
-            7 :"제가 있는 곳까지 와서 거래했어요.",
-    }
-    
-    good_manner_list = [
-            "친절하고 매너가 좋아요.",
-            "시간 약속을 잘 지켜요.",
-            "응답이 빨라요.",
-            
-            "상품상태가 설명한 것과 같아요.",
-            "나눔을 해주셨어요.",
-            "상품설명이 자세해요.",
-            "좋은 상품을 저렴하게 판매해요.",
-            
-            "제가 있는 곳까지 와서 거래했어요.",
-    ]
-
-    class Meta:
-        model = User
-        fields = (
-            "manner",
-        )
-    
-    def get_manner(self, user):
-        reviewyee = user
-        good_manner_cnt = {
-            "친절하고 매너가 좋아요." : set(),
-            "시간 약속을 잘 지켜요." : set(),
-            "응답이 빨라요." : set(),
-            
-            "상품상태가 설명한 것과 같아요." : set(),
-            "나눔을 해주셨어요." : set(),
-            "상품설명이 자세해요." : set(),
-            "좋은 상품을 저렴하게 판매해요." : set(),
-            
-            "제가 있는 곳까지 와서 거래했어요." : set(),
-        } 
-        
-        reviews = Review.objects.filter(reviewyee=reviewyee, manner_type="good").all()
-        for review in reviews:
-            manner = review.manner
-            reviewer = review.reviewer
-            for i, v in enumerate(manner):
-                if v=="1":
-                    good_manner_cnt[self.code_good_manner[i]].add(reviewer)
-        for manner in self.good_manner_list:
-            good_manner_cnt[manner] = len(good_manner_cnt[manner])
-        return good_manner_cnt
-    
-    
-class UserReviewSerializer(serializers.ModelSerializer):
-    review = serializers.SerializerMethodField()
-    manner = serializers.SerializerMethodField()
-    
-    code_good_manner = {
-            0 : "친절하고 매너가 좋아요.",
-            1 : "시간 약속을 잘 지켜요.",
-            2 : "응답이 빨라요.",
-            
-            3 : "상품상태가 설명한 것과 같아요.",
-            4 : "나눔을 해주셨어요.",
-            5 : "상품설명이 자세해요.",
-            6 : "좋은 상품을 저렴하게 판매해요.",
-            
-            7 :"제가 있는 곳까지 와서 거래했어요.",
-    }
-    
-    good_manner_list = [
-            "친절하고 매너가 좋아요.",
-            "시간 약속을 잘 지켜요.",
-            "응답이 빨라요.",
-            
-            "상품상태가 설명한 것과 같아요.",
-            "나눔을 해주셨어요.",
-            "상품설명이 자세해요.",
-            "좋은 상품을 저렴하게 판매해요.",
-            
-            "제가 있는 곳까지 와서 거래했어요.",
-    ]
-
-    class Meta:
-        model = User
-        fields = (
-            "review",
-            "manner",
-        )
-        
-    def get_review(self, user):
-        reviewyee = user
-        reviews = Review.objects.filter(Q(review_type="seller") | Q(review_type="buyer"), reviewyee=reviewyee)
-        return ReviewSerializer(reviews, many=True).data
-    
-    def get_manner(self, user):
-        reviewyee = user
-        good_manner_cnt = {
-            "친절하고 매너가 좋아요." : set(),
-            "시간 약속을 잘 지켜요." : set(),
-            "응답이 빨라요." : set(),
-            
-            "상품상태가 설명한 것과 같아요." : set(),
-            "나눔을 해주셨어요." : set(),
-            "상품설명이 자세해요." : set(),
-            "좋은 상품을 저렴하게 판매해요." : set(),
-            
-            "제가 있는 곳까지 와서 거래했어요." : set(),
-        } 
-        
-        reviews = Review.objects.filter(reviewyee=reviewyee, manner_type="good").all()
-        for review in reviews:
-            manner = review.manner
-            reviewer = review.reviewer
-            for i, v in enumerate(manner):
-                if v=="1":
-                    good_manner_cnt[self.code_good_manner[i]].add(reviewer)
-        for manner in self.good_manner_list:
-            good_manner_cnt[manner] = len(good_manner_cnt[manner])
-        return good_manner_cnt
