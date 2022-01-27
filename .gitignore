@@ -141,3 +141,6 @@ logintest.html
 # chat test html file
 index.html
 room.html
+
+# server log
+nohup.out
