@@ -15,3 +15,5 @@ django-google-oauth # for google login
 pillow # for imagefield usage
 boto3 # for S3 connection
 django-imagekit # for generating thumbnail
+channels
+channels_redis

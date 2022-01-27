@@ -41,6 +41,8 @@ SITE_ID = 1
 # Application definition
 
 DJANGO_APPS = [
+    "channels",
+    "chat",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -175,8 +177,8 @@ JWT_AUTH = {
     "JWT_SECRET_KEY": SECRET_KEY,
     "JWT_ALGORITHM": "HS256",  # 암호화 알고리즘
     "JWT_ALLOW_REFRESH": True,
-    "JWT_EXPIRATION_DELTA": datetime.timedelta(days=1),
-    "JWT_REFRESH_EXPIRATION_DELTA": datetime.timedelta(days=3),
+    "JWT_EXPIRATION_DELTA": datetime.timedelta(days=30),
+    "JWT_REFRESH_EXPIRATION_DELTA": datetime.timedelta(days=50),
 }
 
 # Custom User Model
@@ -204,5 +206,18 @@ AWS_S3_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_S3_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_S3_BUCKET")
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 105000000
-FILE_UPLOAD_MAX_MEMORY_SIZE = 105000000
+DATA_UPLOAD_MAX_MEMORY_SIZE = 2100000
+FILE_UPLOAD_MAX_MEMORY_SIZE = 2100000
+
+
+# django channel
+
+ASGI_APPLICATION = 'wafflemarket.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('54.180.144.124', 6379)],
+        },
+    },
+}

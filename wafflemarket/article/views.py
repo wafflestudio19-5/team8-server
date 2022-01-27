@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from rest_framework import status, viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -26,14 +28,14 @@ class ArticleViewSet(viewsets.GenericViewSet):
     def create(self, request):
         serializer = ArticleCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        image_count = int(serializer.data["image_count"])
+        image_count = int(serializer.validated_data["image_count"])
         for i in range(1, image_count + 1):
             field_name = "image_" + str(i)
             if request.FILES.get(field_name) is None:
                 return Response(
                     data="업로드 형식이 올바르지 않습니다.", status=status.HTTP_400_BAD_REQUEST
                 )
-
+                
         article = serializer.create_article(serializer.validated_data, request.user)
         for i in range(1, image_count + 1):
             field_name = "image_" + str(i)
@@ -44,7 +46,11 @@ class ArticleViewSet(viewsets.GenericViewSet):
                 article=article, product_image=image, product_thumbnail=thumbnail
             )
         return Response(
-            self.get_serializer(article).data, status=status.HTTP_201_CREATED
+            ArticleSerializer(
+                article, 
+                context={"user": request.user}
+            ).data, 
+            status=status.HTTP_201_CREATED,
         )
 
     def update(self, request, pk=None):
@@ -59,8 +65,31 @@ class ArticleViewSet(viewsets.GenericViewSet):
 
         serializer = ArticleCreateSerializer(article, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
+        image_count = int(serializer.validated_data["image_count"])
+        for i in range(1, image_count + 1):
+            field_name = "product_image_" + str(i)
+            if request.FILES.get(field_name) is None:
+                return Response(
+                    data="업로드 형식이 올바르지 않습니다.", status=status.HTTP_400_BAD_REQUEST
+                )
+                
+        article = serializer.create_article(serializer.validated_data, request.user)
+        for i in range(1, image_count + 1):
+            field_name = "image_" + str(i)
+            image = request.FILES.get(field_name)
+            thumbnail = ContentFile(image.read())
+            thumbnail.name = image.name
+            ProductImage.objects.create(
+                article=article, product_image=image, product_thumbnail=thumbnail
+            )
         article = serializer.update_article(serializer.validated_data, article)
-        return Response(self.get_serializer(article).data, status=status.HTTP_200_OK)
+        
+        return Response(
+            ArticleSerializer(
+                article, context={"user": request.user},
+            ).data,
+            status=status.HTTP_200_OK,
+        )
 
     @action(detail=True, methods=["PUT", "DELETE"])
     def purchase(self, request, pk):
@@ -81,7 +110,13 @@ class ArticleViewSet(viewsets.GenericViewSet):
             article.sold_at = None
             article.buyer = None
             article.save()
-        return Response(self.get_serializer(article).data, status=status.HTTP_200_OK)
+            
+        return Response(
+            ArticleSerializer(
+                article, context={"user": request.user},
+            ).data,
+            status=status.HTTP_200_OK,
+        )
 
     @action(detail=True, methods=["PUT", "DELETE"])
     def buyer(self, request, pk=None):
@@ -110,8 +145,13 @@ class ArticleViewSet(viewsets.GenericViewSet):
             article.buyer = None
             article.sold_at = None
             article.save()
-
-        return Response(self.get_serializer(article).data, status=status.HTTP_200_OK)
+            
+        return Response(
+            ArticleSerializer(
+                article, context={"user": request.user},
+            ).data,
+            status=status.HTTP_200_OK,
+        )
 
     def destroy(self, request, pk=None):
         if Article.objects.filter(id=pk).exists():
@@ -171,7 +211,6 @@ class ArticleViewSet(viewsets.GenericViewSet):
                     return Response(
                         data="올바른 카테고리를 지정해주세요.", status=status.HTTP_400_BAD_REQUEST
                     )
-
             # filter article by category
             articles = articles.filter(category__in=user_category_list)
         else:
@@ -184,16 +223,24 @@ class ArticleViewSet(viewsets.GenericViewSet):
         # check if page_id is valid
         if not page_id:
             return Response(
-                self.get_serializer(articles, many=True).data, status=status.HTTP_200_OK
+                ArticleSerializer(
+                    articles, many=True, context={"user" : request.user},
+                ).data, 
+                status=status.HTTP_200_OK,
             )
         serializer = ArticlePaginationValidator(
             data={"page_id": page_id, "article_num": articles.count()}
         )
         serializer.is_valid(raise_exception=True)
 
+        if articles.count() == 0:
+            return Response(status=status.HTTP_200_OK)
+
         page_id = serializer.data.get("page_id")
         return Response(
-            self.get_serializer(pages.page(page_id), many=True).data,
+            ArticleSerializer(
+                pages.page(page_id), many=True, context={"user": request.user},
+            ).data,
             status=status.HTTP_200_OK,
         )
 
@@ -202,8 +249,27 @@ class ArticleViewSet(viewsets.GenericViewSet):
             article = Article.objects.get(id=pk)
         else:
             return Response({"해당하는 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
-        return Response(self.get_serializer(article).data, status=status.HTTP_200_OK)
-
+        if article.seller == request.user:
+            return Response(ArticleSerializer(article, context={"user": request.user}).data, status=status.HTTP_200_OK)
+        
+        article_id = pk
+        user_id = request.user.id
+        cookie_value = request.COOKIES.get("hit", "_")
+        expire_date, now = datetime.now() + timedelta(hours=1), datetime.now()
+        expire_date = expire_date.replace(minute=0, second=0, microsecond=0)
+        expire_date -= now
+        max_age = expire_date.total_seconds()
+        
+        if "_{%s}&{%s}_"%(article_id, user_id) not in cookie_value :
+            article.hit += 1
+            article.save()
+            cookie_value += "{%s}&{%s}_"%(article_id, user_id)
+            response = Response(ArticleSerializer(article, context={"user": request.user}).data, status=status.HTTP_200_OK)
+            response.set_cookie("hit", value=cookie_value, max_age=max_age, httponly=True)
+            return response
+        else:
+            return Response(ArticleSerializer(article, context={"user": request.user}).data, status=status.HTTP_200_OK)
+    
     @action(detail=True, methods=["PUT"])
     def like(self, request, pk):
         if Article.objects.filter(id=pk).exists():
@@ -211,7 +277,7 @@ class ArticleViewSet(viewsets.GenericViewSet):
         else:
             return Response({"해당하는 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
         user = request.user
-
+        
         if self.request.method == "PUT":
             if article.liked_users.filter(pk=user.id).exists():
                 article.liked_users.remove(user)
@@ -222,7 +288,10 @@ class ArticleViewSet(viewsets.GenericViewSet):
                 article.like += 1
                 article.save()
             return Response(
-                self.get_serializer(article).data, status=status.HTTP_200_OK
+                ArticleSerializer(
+                    article, context={"user": request.user}
+                ).data, 
+                status=status.HTTP_200_OK
             )
 
     @action(detail=True, methods=["POST", "GET"])
@@ -295,5 +364,5 @@ class CommentView(APIView):
         comments = Comment.objects.filter(article=article)
         return Response(
             CommentSerializer(comments, many=True, context={"user": request.user}).data,
-            status=status.HTTP_200_OK,
+            status=status.HTTP_201_CREATED,
         )
