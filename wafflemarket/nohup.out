@@ -1,0 +1,66 @@
+2022-01-26 19:56:30,021 INFO     Starting server at tcp:port=8001:interface=0.0.0.0
+2022-01-26 19:56:30,021 INFO     HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+2022-01-26 19:56:30,021 INFO     Configuring endpoint tcp:port=8001:interface=0.0.0.0
+2022-01-26 19:56:30,022 INFO     Listening on TCP address 0.0.0.0:8001
+2022-01-26 20:19:05,853 INFO     Starting server at tcp:port=8001:interface=0.0.0.0
+2022-01-26 20:19:05,854 INFO     HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+2022-01-26 20:19:05,854 INFO     Configuring endpoint tcp:port=8001:interface=0.0.0.0
+2022-01-26 20:19:05,854 CRITICAL Listen failure: Couldn't listen on 0.0.0.0:8001: [Errno 98] Address already in use.
+2022-01-26 21:46:08,732 INFO     Killed 0 pending application instances
+2022-01-26 21:46:13,301 INFO     Starting server at tcp:port=8001:interface=0.0.0.0
+2022-01-26 21:46:13,301 INFO     HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+2022-01-26 21:46:13,302 INFO     Configuring endpoint tcp:port=8001:interface=0.0.0.0
+2022-01-26 21:46:13,302 INFO     Listening on TCP address 0.0.0.0:8001
+2022-01-26 21:46:17,631 INFO     Starting server at tcp:port=8001:interface=0.0.0.0
+2022-01-26 21:46:17,632 INFO     HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+2022-01-26 21:46:17,632 INFO     Configuring endpoint tcp:port=8001:interface=0.0.0.0
+2022-01-26 21:46:17,632 CRITICAL Listen failure: Couldn't listen on 0.0.0.0:8001: [Errno 98] Address already in use.
+2022-01-27 03:59:49,212 INFO     Killed 0 pending application instances
+2022-01-27 04:00:28,633 INFO     Starting server at tcp:port=8001:interface=0.0.0.0
+2022-01-27 04:00:28,633 INFO     HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+2022-01-27 04:00:28,633 INFO     Configuring endpoint tcp:port=8001:interface=0.0.0.0
+2022-01-27 04:00:28,634 INFO     Listening on TCP address 0.0.0.0:8001
+2022-01-27 04:02:43,081 INFO     Killed 0 pending application instances
+2022-01-27 04:06:30,470 INFO     Starting server at tcp:port=8001:interface=0.0.0.0
+2022-01-27 04:06:30,470 INFO     HTTP/2 support enabled
+2022-01-27 04:06:30,470 INFO     Configuring endpoint tcp:port=8001:interface=0.0.0.0
+2022-01-27 04:06:30,471 INFO     Listening on TCP address 0.0.0.0:8001
+2022-01-27 04:12:20,407 INFO     Killed 0 pending application instances
+2022-01-27 04:12:46,327 INFO     Starting server at tcp:port=8001:interface=0.0.0.0
+2022-01-27 04:12:46,327 INFO     HTTP/2 support enabled
+2022-01-27 04:12:46,328 INFO     Configuring endpoint tcp:port=8001:interface=0.0.0.0
+2022-01-27 04:12:46,332 INFO     Listening on TCP address 0.0.0.0:8001
+2022-01-27 04:13:34,641 INFO     Killed 0 pending application instances
+2022-01-27 21:45:10,286 INFO     Starting server at tcp:port=8001:interface=0.0.0.0
+2022-01-27 21:45:10,286 INFO     HTTP/2 support enabled
+2022-01-27 21:45:10,286 INFO     Configuring endpoint tcp:port=8001:interface=0.0.0.0
+2022-01-27 21:45:10,287 INFO     Listening on TCP address 0.0.0.0:8001
+2022-01-27 21:45:50,318 ERROR    Exception inside application: 'user'
+Traceback (most recent call last):
+  File "/home/ec2-user/venv/lib/python3.8/site-packages/channels/routing.py", line 71, in __call__
+    return await application(scope, receive, send)
+  File "./wafflemarket/middleware.py", line 38, in __call__
+    if scope["user"] is None:
+KeyError: 'user'
+2022-01-27 21:47:18,781 INFO     Killed 0 pending application instances
+175.123.169.185:57853 - - [27/Jan/2022:21:45:49] "WSCONNECTING /ws/chat/wijeof/" - -
+175.123.169.185:57853 - - [27/Jan/2022:21:45:50] "WSDISCONNECT /ws/chat/wijeof/" - -
+2022-01-27 21:49:32,644 INFO     Starting server at tcp:port=8001:interface=0.0.0.0
+2022-01-27 21:49:32,645 INFO     HTTP/2 support enabled
+2022-01-27 21:49:32,645 INFO     Configuring endpoint tcp:port=8001:interface=0.0.0.0
+2022-01-27 21:49:32,646 INFO     Listening on TCP address 0.0.0.0:8001
+2022-01-27 21:50:03,674 WARNING  Application instance <Task pending name='Task-1' coro=<ProtocolTypeRouter.__call__() running at /home/ec2-user/venv/lib/python3.8/site-packages/channels/routing.py:71> wait_for=<Future pending cb=[BaseSelectorEventLoop._sock_write_done(13)(), <TaskWakeupMethWrapper object at 0x7fdf351e6dc0>()]>> for connection <WebSocketProtocol client=['175.123.169.185', 58817] path=b'/ws/chat/wijeof/'> took too long to shut down and was killed.
+2022-01-27 21:50:23,692 WARNING  Application instance <Task pending name='Task-6' coro=<ProtocolTypeRouter.__call__() running at /home/ec2-user/venv/lib/python3.8/site-packages/channels/routing.py:71> wait_for=<Future pending cb=[BaseSelectorEventLoop._sock_write_done(13)(), <TaskWakeupMethWrapper object at 0x7fdf351f2fd0>()]>> for connection <WebSocketProtocol client=['175.123.169.185', 58898] path=b'/ws/chat/wijeof/'> took too long to shut down and was killed.
+2022-01-27 21:50:46,959 INFO     Killed 0 pending application instances
+175.123.169.185:58817 - - [27/Jan/2022:21:49:48] "WSCONNECTING /ws/chat/wijeof/" - -
+175.123.169.185:58817 - - [27/Jan/2022:21:49:53] "WSDISCONNECT /ws/chat/wijeof/" - -
+175.123.169.185:58898 - - [27/Jan/2022:21:50:08] "WSCONNECTING /ws/chat/wijeof/" - -
+175.123.169.185:58898 - - [27/Jan/2022:21:50:13] "WSDISCONNECT /ws/chat/wijeof/" - -
+2022-01-27 21:51:18,795 INFO     Starting server at tcp:port=8001:interface=54.180.144.124
+2022-01-27 21:51:18,796 INFO     HTTP/2 support enabled
+2022-01-27 21:51:18,796 INFO     Configuring endpoint tcp:port=8001:interface=54.180.144.124
+2022-01-27 21:51:18,798 CRITICAL Listen failure: Couldn't listen on 54.180.144.124:8001: [Errno 99] Cannot assign requested address.
+2022-01-28 01:36:37,403 INFO     Starting server at tcp:port=8001:interface=0.0.0.0
+2022-01-28 01:36:37,403 INFO     HTTP/2 support enabled
+2022-01-28 01:36:37,404 INFO     Configuring endpoint tcp:port=8001:interface=0.0.0.0
+2022-01-28 01:36:37,404 INFO     Listening on TCP address 0.0.0.0:8001
