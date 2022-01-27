@@ -15,7 +15,7 @@ from django.utils import timezone
 from user.models import User, Auth
 from location.serializers import LocationSerializer
 from article.models import Article
-
+from review.models import Temparature
 
 User = get_user_model()
 JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
@@ -113,6 +113,10 @@ class UserCreateSerializer(serializers.Serializer):
             except:
                 pass
         user.save()
+        
+        temparature = Temparature.objects.create(user=user)
+        temparature.save()
+        
         return user, jwt_token_of(user)
 
 
@@ -170,12 +174,11 @@ class UserSerializer(serializers.ModelSerializer):
     profile_image = serializers.SerializerMethodField(read_only=True)
     location = serializers.SerializerMethodField(read_only=True)
     article_cnt = serializers.SerializerMethodField(read_only=True)
-    
+    temparature = serializers.SerializerMethodField(read_only=True)
     created_at = serializers.SerializerMethodField(read_only=True)
     last_login = serializers.SerializerMethodField(read_only=True)
     leaved_at = serializers.SerializerMethodField(read_only=True)
     username_changed_at = serializers.SerializerMethodField(read_only=True)
-    
 
     class Meta:
         model = User
@@ -185,6 +188,7 @@ class UserSerializer(serializers.ModelSerializer):
             "username",
             "profile_image",
             "email",
+            "temparature",
             "created_at",
             "last_login",
             "leaved_at",
@@ -211,6 +215,12 @@ class UserSerializer(serializers.ModelSerializer):
         article_cnt = Article.objects.filter(seller=user).count()
         return article_cnt
     
+    def get_temparature(self, user):
+        temparature = user.tempfield
+        temparature.update()
+        temparature.viewed_at = timezone.now()
+        temparature.save()
+        return temparature.temparature
     def get_created_at(self, user):
         if user.created_at is not None:
             return time.mktime(user.created_at.timetuple())-54000
@@ -236,6 +246,7 @@ class UserSimpleSerializer(serializers.ModelSerializer):
     location = serializers.SerializerMethodField(read_only=True)
     article_cnt = serializers.SerializerMethodField(read_only=True)
     profile_image = serializers.SerializerMethodField(read_only=True)
+    temparature = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
@@ -245,6 +256,7 @@ class UserSimpleSerializer(serializers.ModelSerializer):
             "location",
             "article_cnt",
             "profile_image",
+            "temparature",
         )
 
     def get_location(self, user):
@@ -263,6 +275,13 @@ class UserSimpleSerializer(serializers.ModelSerializer):
         if url.find("?") == -1:
             return url
         return url[: url.find("?")]
+    
+    def get_temparature(self, user):
+        temparature = user.tempfield
+        temparature.update()
+        temparature.viewed_at = timezone.now()
+        temparature.save()
+        return temparature.temparature
 
 
 class UserUpdateSerializer(serializers.Serializer):

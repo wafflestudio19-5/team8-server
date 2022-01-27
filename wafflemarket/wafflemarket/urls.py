@@ -40,6 +40,7 @@ urlpatterns = [
     path("api/v1/", include("user.urls")),
     path("api/v1/", include("article.urls")),
     path("api/v1/", include("location.urls")),
+    path("api/v1/", include("review.urls")),
     path('api/v1/', include('chat.urls')),
 ]
 
