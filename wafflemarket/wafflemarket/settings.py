@@ -56,6 +56,7 @@ PROJECT_APPS = [
     "user.apps.UserConfig",
     "location.apps.LocationConfig",
     "article.apps.ArticleConfig",
+    "review.apps.ReviewConfig",
 ]
 
 THIRD_PARTY_APPS = [
