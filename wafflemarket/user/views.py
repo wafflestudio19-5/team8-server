@@ -228,7 +228,7 @@ class UserLikedView(APIView):
         user = request.user
         article = user.liked_articles.all()
         return Response(
-            ArticleSerializer(article, many=True).data, status=status.HTTP_200_OK
+            ArticleSerializer(article, many=True, context = {"user" : request.user}).data, status=status.HTTP_200_OK
         )
          
 class UserHistoryView(APIView):
@@ -254,6 +254,6 @@ class UserHistoryView(APIView):
         else:
             return Response({"올바른 요청을 보내세요."}, status=status.HTTP_400_BAD_REQUEST)
                 
-        data = ArticleSerializer(article, many=True).data
+        data = ArticleSerializer(article, many=True, context = {"user" : request.user}).data
         data["review_exists"] = review_exists
         return Response(data, status=status.HTTP_200_OK)
