@@ -112,6 +112,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     location = models.ForeignKey(
         Location, related_name="users", null=True, on_delete=models.SET_NULL
     )
+    temparature = models.FloatField(default=36.5)
 
     interest = models.CharField(max_length=255, default="1" * 17)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)

@@ -15,7 +15,8 @@ from django.utils import timezone
 from user.models import User, Auth
 from location.serializers import LocationSerializer
 from article.models import Article
-from review.models import Temparature
+from review.services import update_temparature
+
 
 User = get_user_model()
 JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
@@ -113,10 +114,7 @@ class UserCreateSerializer(serializers.Serializer):
             except:
                 pass
         user.save()
-        
-        temparature = Temparature.objects.create(user=user)
-        temparature.save()
-        
+                
         return user, jwt_token_of(user)
 
 
@@ -218,26 +216,27 @@ class UserSerializer(serializers.ModelSerializer):
         return article_cnt
     
     def get_temparature(self, user):
-        temparature = user.tempfield
-        temparature.update()
-        temparature.viewed_at = timezone.now()
-        temparature.save()
-        return temparature.temparature
+        update_temparature(user)
+        return user.temparature
+
     def get_created_at(self, user):
         if user.created_at is not None:
             return time.mktime(user.created_at.timetuple())-54000
         else:
             return None
+
     def get_last_login(self, user):
         if user.last_login is not None:
             return time.mktime(user.last_login.timetuple())-54000
         else:
             return None
+
     def get_leaved_at(self, user):
         if user.leaved_at is not None:
             return time.mktime(user.leaved_at.timetuple())-54000
         else:
             return None
+
     def get_username_changed_at(self, user):
         if user.username_changed_at is not None:
             return time.mktime(user.username_changed_at.timetuple())-54000
@@ -279,11 +278,8 @@ class UserSimpleSerializer(serializers.ModelSerializer):
         return url[: url.find("?")]
     
     def get_temparature(self, user):
-        temparature = user.tempfield
-        temparature.update()
-        temparature.viewed_at = timezone.now()
-        temparature.save()
-        return temparature.temparature
+        update_temparature(user)
+        return user.temparature
 
 
 class UserUpdateSerializer(serializers.Serializer):
