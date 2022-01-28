@@ -77,6 +77,8 @@ class ArticleSerializer(serializers.ModelSerializer):
     
     created_at = serializers.SerializerMethodField(read_only=True)
     sold_at = serializers.SerializerMethodField(read_only=True)
+    
+    user_liked = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Article
@@ -94,6 +96,7 @@ class ArticleSerializer(serializers.ModelSerializer):
             "sold_at",  # None이면 거래중
             "buyer",  # None이면 거래중
             "like",
+            "user_liked",
             "hit",
         )
 
@@ -128,7 +131,12 @@ class ArticleSerializer(serializers.ModelSerializer):
         if article.sold_at is not None:
             return time.mktime(article.sold_at.timetuple())-54000
         else:
-            return None
+            return 
+        
+    def get_user_liked(self, article):
+        user = self.context["user"]
+        return user in article.liked_users.all()
+        
 
 
 class CommentCreateSerializer(serializers.Serializer):
