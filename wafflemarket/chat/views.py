@@ -69,7 +69,7 @@ class ChatRoomViewSet(viewsets.GenericViewSet):
     # make chatrooms from user
     def destroy(self, request, pk=None):
         if pk is None:
-            return Response("올바른 요청을 보내주세요.", status=status.HTTP_403_FORBIDDEN)
+            return Response("올바른 요청을 보내주세요.", status=status.HTTP_400_BAD_REQUEST)
 
         if not ChatRoom.objects.filter(id=pk).exists():
             return Response("해당하는 채팅방이 존재하지 않습니다.", status=status.HTTP_404_NOT_FOUND)
