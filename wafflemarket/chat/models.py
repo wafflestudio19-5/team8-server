@@ -16,6 +16,8 @@ class ChatRoom(models.Model):
     buyer = models.ForeignKey(
         User, related_name="chatrooms_bought", null=True, on_delete=models.SET_NULL
     )
+    # first word for seller, second word for buyer
+    valid_user = models.CharField(max_length=2, null=True, default="sb")
 
 
 class Chat(models.Model):
