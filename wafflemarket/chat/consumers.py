@@ -49,14 +49,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         sender_id = await self.get_sender_id(chat)
 
         # Send message to room group
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                "type": "chat_message",
-                "chat": await self.get_json_messages(chat),
-                "sender_id": sender_id,
-            },
-        )
+        if await self.is_users_active():
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type": "chat_message",
+                    "chat": await self.get_json_messages(chat),
+                    "sender_id": sender_id,
+                },
+            )
 
     # Receive message from room group
     async def chat_message(self, event):
@@ -90,6 +91,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_sender_id(self, chat):
         return chat.sender.id
+
+    @database_sync_to_async
+    def is_users_active(self):
+        seller = self.chatroom.seller
+        buyer = self.chatroom.buyer
+        return seller.is_active or buyer.is_active
 
     @database_sync_to_async
     def get_is_sender(self, sender_id):
