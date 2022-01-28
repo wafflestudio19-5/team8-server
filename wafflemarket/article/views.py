@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 
 from django.core.files.base import ContentFile
 from django.core.paginator import Paginator
+from django.db.models import Q
 from django.utils import timezone
 
 from user.models import User
@@ -196,7 +197,7 @@ class ArticleViewSet(viewsets.GenericViewSet):
         neighborhood = [user.location.id]
         for location_neighborhood in user.location.neighborhoods.all():
             neighborhood.append(location_neighborhood.neighborhood.id)
-        articles = self.queryset.filter(location__id__in=neighborhood)
+        articles = self.queryset.filter(Q(location__id__in=neighborhood)&Q(seller__is_active=True))
 
         if not keyword:
             # check categories to filter article
@@ -245,7 +246,7 @@ class ArticleViewSet(viewsets.GenericViewSet):
         )
 
     def retrieve(self, request, pk=None):
-        if Article.objects.filter(id=pk).exists():
+        if Article.objects.filter(Q(id=pk)&Q(seller__is_active=True)).exists():
             article = Article.objects.get(id=pk)
         else:
             return Response({"해당하는 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)

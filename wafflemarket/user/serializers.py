@@ -140,14 +140,16 @@ class UserLoginSerializer(serializers.Serializer):
         }
 
     def find_user(self, phone_number, email):
-        if phone_number and User.objects.filter(
-            phone_number=phone_number, is_active=True
-        ):
-            return User.objects.get(phone_number=phone_number, is_active=True)
-        elif email and User.objects.filter(email=email, is_active=True):
-            return User.objects.get(email=email, is_active=True)
+        if phone_number and User.objects.filter(phone_number=phone_number):
+            user = User.objects.get(phone_number=phone_number)
+        elif email and User.objects.filter(email=email):
+            user = User.objects.get(email=email)
         else:
             raise serializers.ValidationError("존재하지 않는 사용자입니다.")
+        
+        # activate if previously deactivate
+        user.is_active = True
+        return user
 
     def check_first_login(self, data):
         phone_number = data.get("phone_number")
@@ -244,6 +246,7 @@ class UserSerializer(serializers.ModelSerializer):
             return None
 
 class UserSimpleSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField(read_only=True)
     location = serializers.SerializerMethodField(read_only=True)
     article_cnt = serializers.SerializerMethodField(read_only=True)
     profile_image = serializers.SerializerMethodField(read_only=True)
@@ -259,6 +262,12 @@ class UserSimpleSerializer(serializers.ModelSerializer):
             "profile_image",
             "temparature",
         )
+
+    def get_username(self, user):
+        if user.is_active:
+            return user.username
+        else:
+            return "(탈퇴한 사용자)"
 
     def get_location(self, user):
         if user.location is None:

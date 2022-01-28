@@ -123,11 +123,10 @@ class UserLeaveView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def delete(self, request):
-        # 우선 임시탈퇴를 영구탈퇴로 변경하여 구현함
-        """request.user.is_active = False
+        # temporarily unactivated
+        request.user.is_active = False
         request.user.save()
-        logout(request)"""
-        request.user.delete()
+        logout(request)
         return Response(data={"leaved": True}, status=status.HTTP_200_OK)
 
 
