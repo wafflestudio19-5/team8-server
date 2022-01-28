@@ -130,13 +130,15 @@ class UserLoginSerializer(serializers.Serializer):
         phone_number = data.get("phone_number")
         email = data.get("email")
         user = self.find_user(phone_number, email)
-
+        user_data = UserSerializer(user).data
         update_last_login(None, user)
+        
         return {
-            "phone_number": user.phone_number,
-            "email": user.email,
-            "username": user.username,
+            "logined" : True,
+            "user" : user_data,
             "token": jwt_token_of(user),
+            "first_login" : self.check_first_login(data=data),
+            "location_exists" : self.location_exists(data=data),
         }
 
     def find_user(self, phone_number, email):
