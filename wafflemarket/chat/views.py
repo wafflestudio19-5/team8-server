@@ -71,11 +71,11 @@ class ChatRoomViewSet(viewsets.GenericViewSet):
         if pk is None:
             return Response("올바른 요청을 보내주세요.", status=status.HTTP_400_BAD_REQUEST)
 
-        if not ChatRoom.objects.filter(id=pk).exists():
+        if not ChatRoom.objects.filter(name=pk).exists():
             return Response("해당하는 채팅방이 존재하지 않습니다.", status=status.HTTP_404_NOT_FOUND)
 
         user = request.user
-        chatroom = ChatRoom.objects.get(id=pk)
+        chatroom = ChatRoom.objects.get(name=pk)
         if user not in [chatroom.seller, chatroom.buyer]:
             return Response("해당 유저의 채팅방이 아닙니다.", status=status.HTTP_403_FORBIDDEN)
 
