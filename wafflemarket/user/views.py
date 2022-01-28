@@ -31,26 +31,8 @@ User = get_user_model()
 
 def login(data):
     serializer = UserLoginSerializer(data=data)
-    first_login = serializer.check_first_login(data=data)
-    location_exists = serializer.location_exists(data=data)
     serializer.is_valid(raise_exception=True)
-
-    phone_number = serializer.validated_data.get("phone_number")
-    email = serializer.validated_data.get("email")
-    username = serializer.validated_data.get("username")
-    token = serializer.validated_data.get("token")
-    profile_image = serializer.validated_data.get("profile_image")
-    
-    return {
-        "phone_number": phone_number,
-        "email": email,
-        "username": username,
-        "logined": True,
-        "first_login": first_login,
-        "location_exists": location_exists,
-        "token": token,
-        "profile_image": profile_image,
-    }
+    return serializer.validated_data
 
 
 class UserAuthView(APIView):

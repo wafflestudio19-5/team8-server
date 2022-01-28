@@ -130,15 +130,15 @@ class UserLoginSerializer(serializers.Serializer):
         phone_number = data.get("phone_number")
         email = data.get("email")
         user = self.find_user(phone_number, email)
-        profile_image = self.get_profile_image(user)
-
+        user_data = UserSerializer(user).data
         update_last_login(None, user)
+        
         return {
-            "phone_number": user.phone_number,
-            "email": user.email,
-            "username": user.username,
+            "logined" : True,
+            "user" : user_data,
             "token": jwt_token_of(user),
-            "profile_image": profile_image,
+            "first_login" : self.check_first_login(data=data),
+            "location_exists" : self.location_exists(data=data),
         }
 
     def find_user(self, phone_number, email):
@@ -170,14 +170,6 @@ class UserLoginSerializer(serializers.Serializer):
             return False
         elif user.location is not None:
             return True
-        
-    def get_profile_image(self, user):
-        if not user.profile_image:
-            return None
-        url = user.profile_image.url
-        if url.find("?") == -1:
-            return url
-        return url[: url.find("?")]
 
 
 class UserSerializer(serializers.ModelSerializer):
