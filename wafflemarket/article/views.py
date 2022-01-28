@@ -111,6 +111,7 @@ class ArticleViewSet(viewsets.GenericViewSet):
             
         elif self.request.method == "DELETE":
             
+            # delete reviews when canceling purchase
             if Review.objects.filter(review_type="seller", article=article).exists():
                 seller_review = Review.objects.get(review_type="seller", article=article)
                 seller_review.delete()
@@ -141,28 +142,32 @@ class ArticleViewSet(viewsets.GenericViewSet):
             )
 
         if self.request.method == "PUT":
+            buyer_id = request.data.get("buyer_id")
             
-            if article.buyer is not None:
+            if not User.objects.filter(id=buyer_id).exists():
+                return Response(
+                    {"해당하는 구매자를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND
+                )
+                
+            buyer = User.objects.get(id=buyer_id)
+            
+            # delete reviews when changing buyer
+            if article.buyer is not None and article.buyer != buyer:
                 if Review.objects.filter(review_type="seller", article=article).exists():
                     seller_review = Review.objects.get(review_type="seller", article=article)
                     seller_review.delete()
                 if Review.objects.filter(review_type="buyer", article=article).exists():
                     buyer_review = Review.objects.get(review_type="buyer", article=article)
                     buyer_review.delete()
-                
-            buyer_id = request.data.get("buyer_id")
-            if User.objects.filter(id=buyer_id).exists():
-                buyer = User.objects.get(id=buyer_id)
-                article.buyer = buyer
-                article.sold_at = timezone.now()
-                article.save()
-            else:
-                return Response(
-                    {"해당하는 구매자를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND
-                )
-
+            
+            article.buyer = buyer
+            article.sold_at = timezone.now()
+            article.save()
+            
+            
         elif self.request.method == "DELETE":
             
+            # delete reviews when deleting buyer
             if Review.objects.filter(review_type="seller", article=article).exists():
                 seller_review = Review.objects.get(review_type="seller", article=article)
                 seller_review.delete()
