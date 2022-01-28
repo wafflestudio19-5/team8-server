@@ -19,6 +19,7 @@ from article.serializers import (
     CommentCreateSerializer,
     CommentSerializer,
 )
+from review.models import Review
 
 
 class ArticleViewSet(viewsets.GenericViewSet):
@@ -107,7 +108,16 @@ class ArticleViewSet(viewsets.GenericViewSet):
         if self.request.method == "PUT":
             article.sold_at = timezone.now()
             article.save()
+            
         elif self.request.method == "DELETE":
+            
+            if Review.objects.filter(review_type="seller", article=article).exists():
+                seller_review = Review.objects.get(review_type="seller", article=article)
+                seller_review.delete()
+            if Review.objects.filter(review_type="buyer", article=article).exists():
+                buyer_review = Review.objects.get(review_type="buyer", article=article)
+                buyer_review.delete()
+                
             article.sold_at = None
             article.buyer = None
             article.save()
@@ -131,6 +141,15 @@ class ArticleViewSet(viewsets.GenericViewSet):
             )
 
         if self.request.method == "PUT":
+            
+            if article.buyer is not None:
+                if Review.objects.filter(review_type="seller", article=article).exists():
+                    seller_review = Review.objects.get(review_type="seller", article=article)
+                    seller_review.delete()
+                if Review.objects.filter(review_type="buyer", article=article).exists():
+                    buyer_review = Review.objects.get(review_type="buyer", article=article)
+                    buyer_review.delete()
+                
             buyer_id = request.data.get("buyer_id")
             if User.objects.filter(id=buyer_id).exists():
                 buyer = User.objects.get(id=buyer_id)
@@ -143,6 +162,14 @@ class ArticleViewSet(viewsets.GenericViewSet):
                 )
 
         elif self.request.method == "DELETE":
+            
+            if Review.objects.filter(review_type="seller", article=article).exists():
+                seller_review = Review.objects.get(review_type="seller", article=article)
+                seller_review.delete()
+            if Review.objects.filter(review_type="buyer", article=article).exists():
+                buyer_review = Review.objects.get(review_type="buyer", article=article)
+                buyer_review.delete()
+                
             article.buyer = None
             article.sold_at = None
             article.save()
