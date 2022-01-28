@@ -24,7 +24,7 @@ class Review(models.Model):
     reviewer = models.ForeignKey(User, related_name="review_by", on_delete=models.SET_NULL, null=True)
     reviewyee = models.ForeignKey(User, related_name="review_about", on_delete=models.CASCADE)
 
-    article = models.ForeignKey(Article, on_delete=models.CASCADE, null=True, default=None)
+    article = models.ForeignKey(Article, on_delete=models.SET_NULL, null=True, default=None)
     review_location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, default=None)
     
     review = models.CharField(max_length=255, null=True)
