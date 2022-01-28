@@ -21,6 +21,7 @@ from user.serializers import (
     UserSimpleSerializer,
     UserCategorySerializer,
 )
+from article.models import Article
 from article.serializers import ArticleSerializer
 from review.models import Review
 
