@@ -39,6 +39,8 @@ def login(data):
     email = serializer.validated_data.get("email")
     username = serializer.validated_data.get("username")
     token = serializer.validated_data.get("token")
+    profile_image = serializer.validated_data.get("profile_image")
+    
     return {
         "phone_number": phone_number,
         "email": email,
@@ -47,6 +49,7 @@ def login(data):
         "first_login": first_login,
         "location_exists": location_exists,
         "token": token,
+        "profile_image": profile_image,
     }
 
 
