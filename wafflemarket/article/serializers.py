@@ -131,7 +131,7 @@ class ArticleSerializer(serializers.ModelSerializer):
         if article.sold_at is not None:
             return time.mktime(article.sold_at.timetuple())-54000
         else:
-            return 
+            return None
         
     def get_user_liked(self, article):
         user = self.context["user"]
