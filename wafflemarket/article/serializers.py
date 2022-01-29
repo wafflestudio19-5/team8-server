@@ -5,6 +5,7 @@ from rest_framework import serializers
 from user.serializers import UserSimpleSerializer
 from location.serializers import LocationSerializer
 from article.models import Article, Comment, ProductImage
+from review.models import Review
 
 
 class ArticleCreateSerializer(serializers.Serializer):
@@ -79,6 +80,7 @@ class ArticleSerializer(serializers.ModelSerializer):
     sold_at = serializers.SerializerMethodField(read_only=True)
     
     user_liked = serializers.SerializerMethodField(read_only=True)
+    review_exists =  serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Article
@@ -98,6 +100,7 @@ class ArticleSerializer(serializers.ModelSerializer):
             "like",
             "user_liked",
             "hit",
+            "review_exists"
         )
 
     def get_seller(self, article):
@@ -136,6 +139,16 @@ class ArticleSerializer(serializers.ModelSerializer):
     def get_user_liked(self, article):
         user = self.context["user"]
         return user in article.liked_users.all()
+    
+    def get_review_exists(self, article):
+        user = self.context["user"]
+        seller_review_exists = Review.objects.filter(review_type="seller", article=article, reviewer=user).exists()
+        buyer_review_exists = Review.objects.filter(review_type="buyer", article=article, reviewer=user).exists()
+        return {
+            "seller" : seller_review_exists,
+            "buyer" : buyer_review_exists
+        }
+        
         
 
 

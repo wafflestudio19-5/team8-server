@@ -103,7 +103,7 @@ class ReviewArticleViewSet(viewsets.GenericViewSet):
         else:
             return Response({"존재하지 않는 게시글입니다."}, status=status.HTTP_404_NOT_FOUND)
         
-        if article.seller != request.user or article.sold_at is None:
+        if article.seller != request.user or article.buyer is None:
             return Response({"리뷰를 작성할 권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
         
         if Review.objects.filter(article=article, reviewer=request.user):
