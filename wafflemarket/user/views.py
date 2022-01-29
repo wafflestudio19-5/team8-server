@@ -237,23 +237,18 @@ class UserHistoryView(APIView):
     def get(self, request, pk=None):
         if pk==1: #구매내역 : 1
             article = Article.objects.filter(buyer=request.user).order_by('-created_at')
-            review_exists = Review.objects.filter(review_type="seller", article=article, reviewer=request.user).exists()
             
         elif pk==2: #판매내역 : 2
             sold = request.query_params.get('sold')
             if sold=='true':
                 article = Article.objects.filter(seller=request.user, sold_at__isnull=False).order_by('-created_at')
-                review_exists = Review.objects.filter(review_type="seller", article=article, reviewer=request.user).exists()
             elif sold=='false':
                 article = Article.objects.filter(seller=request.user, sold_at__isnull=True).order_by('-created_at')
-                review_exists = False
             else:
                 article = Article.objects.filter(seller=request.user).order_by('-created_at')
-                review_exists = Review.objects.filter(review_type="seller", article=article, reviewer=request.user).exists()
         
         else:
             return Response({"올바른 요청을 보내세요."}, status=status.HTTP_400_BAD_REQUEST)
                 
         data = ArticleSerializer(article, many=True, context = {"user" : request.user}).data
-        data["review_exists"] = review_exists
         return Response(data, status=status.HTTP_200_OK)
