@@ -54,7 +54,10 @@ class ChatRoomSerializer(serializers.ModelSerializer):
             return chatroom.seller.username
 
     def get_location(self, chatroom):
-        return LocationSerializer(chatroom.article.location).data
+        if chatroom.article is None:
+            return None
+        else:
+            return LocationSerializer(chatroom.article.location).data
 
     def get_profile_image(self, chatroom):
         user = self.context["user"]
@@ -65,9 +68,15 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         return UserSerializer(user).data.get("profile_image")
 
     def get_article_id(self, chatroom):
-        return chatroom.article.id
+        if chatroom.article is None:
+            return None
+        else:
+            return chatroom.article.id
 
     def get_product_image(self, chatroom):
-        return ArticleSerializer(chatroom.article, context=self.context).data.get(
-            "product_images"
-        )[0]
+        if chatroom.article is None:
+            return None
+        else:
+            return ArticleSerializer(chatroom.article, context=self.context).data.get(
+                "product_images"
+            )[0]
