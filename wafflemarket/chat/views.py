@@ -41,7 +41,7 @@ class ChatRoomViewSet(viewsets.GenericViewSet):
         chatrooms = self.queryset.filter(
             (Q(seller=user) & Q(valid_user__contains="s"))
             | (Q(buyer=user) & Q(valid_user__contains="b"))
-        )
+        ).exclude(article__isnull=True)
         return Response(
             ChatRoomSerializer(chatrooms, many=True, context={"user": user}).data,
             status=status.HTTP_200_OK,
